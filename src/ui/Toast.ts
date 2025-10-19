@@ -5,6 +5,7 @@ export class Toast {
     private static container: HTMLDivElement | null = null;
     private static currentToast: HTMLDivElement | null = null;
     private static hideTimeout: number | null = null;
+    private static removeTimeout: number | null = null;
 
     /**
      * Initializes the toast container
@@ -23,14 +24,23 @@ export class Toast {
     public static show(message: string, duration: number = 2000): void {
         this.initContainer();
 
-        // Clear existing toast
-        if (this.currentToast) {
-            this.hide();
-        }
-
-        // Clear existing timeout
+        // Clear existing timeouts
         if (this.hideTimeout !== null) {
             clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
+
+        if (this.removeTimeout !== null) {
+            clearTimeout(this.removeTimeout);
+            this.removeTimeout = null;
+        }
+
+        // Immediately remove existing toast from DOM if present
+        if (this.currentToast) {
+            if (this.currentToast.parentNode) {
+                this.currentToast.parentNode.removeChild(this.currentToast);
+            }
+            this.currentToast = null;
         }
 
         // Create toast element
@@ -43,7 +53,9 @@ export class Toast {
 
         // Trigger animation after a tiny delay
         setTimeout(() => {
-            toast.classList.add('show');
+            if (toast === this.currentToast) {
+                toast.classList.add('show');
+            }
         }, 10);
 
         // Auto-hide after duration
@@ -58,14 +70,17 @@ export class Toast {
     private static hide(): void {
         if (!this.currentToast) return;
 
-        this.currentToast.classList.remove('show');
+        const toastToHide = this.currentToast;
+        toastToHide.classList.remove('show');
 
         // Remove from DOM after animation
-        setTimeout(() => {
-            if (this.currentToast && this.currentToast.parentNode) {
-                this.currentToast.parentNode.removeChild(this.currentToast);
+        this.removeTimeout = window.setTimeout(() => {
+            if (toastToHide.parentNode) {
+                toastToHide.parentNode.removeChild(toastToHide);
             }
-            this.currentToast = null;
+            if (this.currentToast === toastToHide) {
+                this.currentToast = null;
+            }
         }, 300);
     }
 }
