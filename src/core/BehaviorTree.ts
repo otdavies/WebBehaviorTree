@@ -158,6 +158,7 @@ export class BehaviorTree {
     public stop(): void {
         this.pause();
         this.reset();
+        this.blackboard.clear();
         this.state = 'idle';
         this.notifyStateChange();
     }
