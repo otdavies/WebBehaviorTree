@@ -349,8 +349,8 @@ describe('EditorState', () => {
       editorState.addNode(parent);
       editorState.addNode(child);
 
-      // Create a simple command to connect nodes
-      const connectCommand = {
+      // Create a simple operation to connect nodes
+      const connectOperation = {
         description: 'Connect nodes',
         execute: () => {
           editorState.connectNodes(parent, child);
@@ -360,20 +360,20 @@ describe('EditorState', () => {
         }
       };
 
-      // Execute command
-      editorState.commandHistory.execute(connectCommand);
+      // Execute operation
+      editorState.operationHistory.execute(connectOperation);
 
       // Verify connection
       expect(parent.children).toContain(child);
       expect(child.parent).toBe(parent);
 
       // Undo
-      editorState.commandHistory.undo();
+      editorState.operationHistory.undo();
       expect(parent.children).not.toContain(child);
       expect(child.parent).toBeNull();
 
       // Redo
-      editorState.commandHistory.redo();
+      editorState.operationHistory.redo();
       expect(parent.children).toContain(child);
       expect(child.parent).toBe(parent);
     });
@@ -381,8 +381,8 @@ describe('EditorState', () => {
     it('can undo and redo adding nodes', () => {
       const node = new ActionNode('Test Node');
 
-      // Create command to add node
-      const addCommand = {
+      // Create operation to add node
+      const addOperation = {
         description: 'Add node',
         execute: () => {
           editorState.addNode(node);
@@ -393,46 +393,46 @@ describe('EditorState', () => {
       };
 
       // Execute
-      editorState.commandHistory.execute(addCommand);
+      editorState.operationHistory.execute(addOperation);
       expect(editorState.nodes).toContain(node);
 
       // Undo
-      editorState.commandHistory.undo();
+      editorState.operationHistory.undo();
       expect(editorState.nodes).not.toContain(node);
 
       // Redo
-      editorState.commandHistory.redo();
+      editorState.operationHistory.redo();
       expect(editorState.nodes).toContain(node);
     });
 
-    it('clears redo stack when new command is executed after undo', () => {
+    it('clears redo stack when new operation is executed after undo', () => {
       const node1 = new ActionNode('Node 1');
       const node2 = new ActionNode('Node 2');
 
-      const addCommand1 = {
+      const addOperation1 = {
         description: 'Add node 1',
         execute: () => editorState.addNode(node1),
         undo: () => editorState.removeNode(node1)
       };
 
-      const addCommand2 = {
+      const addOperation2 = {
         description: 'Add node 2',
         execute: () => editorState.addNode(node2),
         undo: () => editorState.removeNode(node2)
       };
 
-      // Execute first command
-      editorState.commandHistory.execute(addCommand1);
-      expect(editorState.commandHistory.canUndo()).toBe(true);
-      expect(editorState.commandHistory.canRedo()).toBe(false);
+      // Execute first operation
+      editorState.operationHistory.execute(addOperation1);
+      expect(editorState.operationHistory.canUndo()).toBe(true);
+      expect(editorState.operationHistory.canRedo()).toBe(false);
 
       // Undo it
-      editorState.commandHistory.undo();
-      expect(editorState.commandHistory.canRedo()).toBe(true);
+      editorState.operationHistory.undo();
+      expect(editorState.operationHistory.canRedo()).toBe(true);
 
-      // Execute a new command - should clear redo stack
-      editorState.commandHistory.execute(addCommand2);
-      expect(editorState.commandHistory.canRedo()).toBe(false);
+      // Execute a new operation - should clear redo stack
+      editorState.operationHistory.execute(addOperation2);
+      expect(editorState.operationHistory.canRedo()).toBe(false);
       expect(editorState.nodes).toContain(node2);
       expect(editorState.nodes).not.toContain(node1);
     });
@@ -447,41 +447,41 @@ describe('EditorState', () => {
       editorState.addNode(child2);
 
       // Connect child1
-      const connectCommand1 = {
+      const connectOperation1 = {
         description: 'Connect child 1',
         execute: () => editorState.connectNodes(root, child1),
         undo: () => editorState.disconnectNode(child1)
       };
 
       // Connect child2
-      const connectCommand2 = {
+      const connectOperation2 = {
         description: 'Connect child 2',
         execute: () => editorState.connectNodes(root, child2),
         undo: () => editorState.disconnectNode(child2)
       };
 
       // Execute both
-      editorState.commandHistory.execute(connectCommand1);
-      editorState.commandHistory.execute(connectCommand2);
+      editorState.operationHistory.execute(connectOperation1);
+      editorState.operationHistory.execute(connectOperation2);
 
       expect(root.children.length).toBe(2);
       expect(root.children).toContain(child1);
       expect(root.children).toContain(child2);
 
       // Undo both
-      editorState.commandHistory.undo();
+      editorState.operationHistory.undo();
       expect(root.children.length).toBe(1);
       expect(root.children).toContain(child1);
 
-      editorState.commandHistory.undo();
+      editorState.operationHistory.undo();
       expect(root.children.length).toBe(0);
 
       // Redo both
-      editorState.commandHistory.redo();
+      editorState.operationHistory.redo();
       expect(root.children.length).toBe(1);
       expect(root.children).toContain(child1);
 
-      editorState.commandHistory.redo();
+      editorState.operationHistory.redo();
       expect(root.children.length).toBe(2);
       expect(root.children).toContain(child1);
       expect(root.children).toContain(child2);
