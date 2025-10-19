@@ -25,6 +25,7 @@ export const Theme = {
     // UI element colors
     ui: {
         connection: '#7F8C8D',
+        activeConnection: '#00D9FF', // Bright cyan for active execution flow
         selection: '#F39C12',
         hover: '#3498DB',
         port: '#BDC3C7'

@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)",
+      "Bash(tsc *)",
+      "Bash(webpack *)",
+      "Bash(vite *)",
+      "Bash(eslint *)",
+      "Bash(prettier *)",
+      "Bash(node *)",
+      "Bash(npx *)",
+      "Bash(ts-node *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git reset *)",
+      "Bash(git stash *)",
+      "Bash(git tag *)",
+      "Search(*)",
+      "WebSearch(*)"
+    ],
+    "deny": [
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git fetch *)",
+      "Bash(git clone *)",
+      "Bash(git remote *)"
+    ],
+    "ask": [
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(download *)"
+    ]
+  }
+}
