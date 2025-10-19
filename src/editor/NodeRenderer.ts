@@ -3,6 +3,16 @@ import { NodeStatus } from '../core/NodeStatus.js';
 import { Vector2 } from '../utils/Vector2.js';
 import { Viewport } from './Viewport.js';
 import { Theme } from '../utils/Theme.js';
+import {
+    NodeConstants,
+    ShadowConstants,
+    StrokeConstants,
+    ProgressBarConstants,
+    IconConstants,
+    PulseAnimationConstants,
+    HoverConstants,
+    ConnectionConstants
+} from '../utils/RendererConstants.js';
 
 /**
  * NodeRenderer: Renders individual nodes on the canvas.
@@ -13,14 +23,14 @@ export class NodeRenderer {
     // Node dimensions (use Theme constants)
     public static readonly NODE_MIN_WIDTH = Theme.layout.nodeMinWidth;
     public static readonly NODE_HEIGHT = Theme.layout.nodeHeight;
-    public static readonly NODE_RADIUS = 8;
-    public static readonly NODE_PADDING = 12;
+    public static readonly NODE_RADIUS = NodeConstants.CORNER_RADIUS;
+    public static readonly NODE_PADDING = NodeConstants.INNER_PADDING;
 
     // Port dimensions (use Theme constants)
     public static readonly PORT_RADIUS = Theme.layout.portRadius;
     public static readonly PORT_CLICK_RADIUS = Theme.layout.portClickRadius;
     public static readonly OUTPUT_PORT_SPACING = Theme.layout.outputPortSpacing;
-    public static readonly ADD_PORT_RADIUS = 6;
+    public static readonly ADD_PORT_RADIUS = NodeConstants.ADD_PORT_RADIUS;
 
     /**
      * Calculates the width of a node based on its children count
@@ -36,7 +46,7 @@ export class NodeRenderer {
         const childCount = node.children.length;
         const canAddMore = node.canAddMoreChildren();
         const portsNeeded = canAddMore ? childCount + 1 : childCount; // +1 for add port if available
-        const widthForPorts = portsNeeded * this.OUTPUT_PORT_SPACING + 40; // +40 for margins
+        const widthForPorts = portsNeeded * this.OUTPUT_PORT_SPACING + NodeConstants.PORT_WIDTH_MARGIN;
 
         return Math.max(this.NODE_MIN_WIDTH, widthForPorts);
     }
@@ -111,14 +121,14 @@ export class NodeRenderer {
     private drawShadow(ctx: CanvasRenderingContext2D, _pos: Vector2, isSelected: boolean): void {
         if (isSelected) {
             ctx.shadowColor = Theme.ui.selection;
-            ctx.shadowBlur = 15;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
+            ctx.shadowBlur = ShadowConstants.SELECTION_BLUR;
+            ctx.shadowOffsetX = ShadowConstants.SELECTION_OFFSET_X;
+            ctx.shadowOffsetY = ShadowConstants.SELECTION_OFFSET_Y;
         } else {
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 4;
+            ctx.shadowColor = `rgba(0, 0, 0, ${ShadowConstants.HOVER_OPACITY})`;
+            ctx.shadowBlur = ShadowConstants.HOVER_BLUR;
+            ctx.shadowOffsetX = ShadowConstants.HOVER_OFFSET_X;
+            ctx.shadowOffsetY = ShadowConstants.HOVER_OFFSET_Y;
         }
     }
 
@@ -155,15 +165,22 @@ export class NodeRenderer {
 
         // Draw border
         ctx.strokeStyle = color;
-        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.lineWidth = isSelected ? StrokeConstants.NODE_SELECTED : StrokeConstants.NODE_NORMAL;
         this.roundRect(ctx, x, y, nodeWidth, NodeRenderer.NODE_HEIGHT, NodeRenderer.NODE_RADIUS);
         ctx.stroke();
 
         // Draw hover highlight
         if (isHovered && !isSelected) {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = 1;
-            this.roundRect(ctx, x + 1, y + 1, nodeWidth - 2, NodeRenderer.NODE_HEIGHT - 2, NodeRenderer.NODE_RADIUS - 1);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${HoverConstants.HIGHLIGHT_OPACITY})`;
+            ctx.lineWidth = StrokeConstants.NODE_HOVER_HIGHLIGHT;
+            this.roundRect(
+                ctx,
+                x + HoverConstants.HIGHLIGHT_INSET,
+                y + HoverConstants.HIGHLIGHT_INSET,
+                nodeWidth - HoverConstants.HIGHLIGHT_INSET * 2,
+                NodeRenderer.NODE_HEIGHT - HoverConstants.HIGHLIGHT_INSET * 2,
+                NodeRenderer.NODE_RADIUS - HoverConstants.HIGHLIGHT_RADIUS_REDUCTION
+            );
             ctx.stroke();
         }
     }
@@ -197,8 +214,8 @@ export class NodeRenderer {
 
             // Draw gradient progress bar
             const gradient = ctx.createLinearGradient(x, y, x + progressWidth, y);
-            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.3)'); // Blue with transparency
-            gradient.addColorStop(1, 'rgba(52, 152, 219, 0.5)');
+            gradient.addColorStop(0, `rgba(${ProgressBarConstants.GRADIENT_START_R}, ${ProgressBarConstants.GRADIENT_START_G}, ${ProgressBarConstants.GRADIENT_START_B}, ${ProgressBarConstants.GRADIENT_START_ALPHA})`);
+            gradient.addColorStop(1, `rgba(${ProgressBarConstants.GRADIENT_END_R}, ${ProgressBarConstants.GRADIENT_END_G}, ${ProgressBarConstants.GRADIENT_END_B}, ${ProgressBarConstants.GRADIENT_END_ALPHA})`);
 
             ctx.fillStyle = gradient;
             ctx.fillRect(x, y, progressWidth, NodeRenderer.NODE_HEIGHT);
@@ -212,7 +229,7 @@ export class NodeRenderer {
      */
     private drawIcon(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, icon: string, viewport: Viewport): void {
         const nodeWidth = NodeRenderer.getNodeWidth(node);
-        const iconSize = 24 / viewport.zoom;
+        const iconSize = Theme.layout.iconSize / viewport.zoom;
         const iconX = pos.x - nodeWidth / 2 + NodeRenderer.NODE_PADDING + iconSize / 2;
         const iconY = pos.y - iconSize / 2;
 
@@ -232,80 +249,100 @@ export class NodeRenderer {
     private drawSimpleIcon(ctx: CanvasRenderingContext2D, icon: string, x: number, y: number, size: number): void {
         ctx.strokeStyle = '#E0E0E0';
         ctx.fillStyle = '#E0E0E0';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = StrokeConstants.ICON_LINE;
 
         // Map icon names to simple shapes
         switch (icon) {
             case 'fa-list': // Sequence
-                for (let i = 0; i < 3; i++) {
-                    ctx.fillRect(x - size / 3, y - size / 3 + i * size / 4, size / 2, 2);
+                for (let i = 0; i < IconConstants.LIST_LINE_COUNT; i++) {
+                    ctx.fillRect(
+                        x - size * IconConstants.SHAPE_FRACTION_THIRD,
+                        y - size * IconConstants.SHAPE_FRACTION_THIRD + i * size * IconConstants.LIST_LINE_SPACING,
+                        size * IconConstants.SHAPE_FRACTION_HALF,
+                        IconConstants.LIST_LINE_HEIGHT
+                    );
                 }
                 break;
             case 'fa-random': // Selector
                 ctx.beginPath();
-                ctx.moveTo(x - size / 3, y);
-                ctx.lineTo(x, y - size / 3);
-                ctx.lineTo(x + size / 3, y);
-                ctx.lineTo(x, y + size / 3);
+                ctx.moveTo(x - size * IconConstants.SHAPE_FRACTION_THIRD, y);
+                ctx.lineTo(x, y - size * IconConstants.SHAPE_FRACTION_THIRD);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y);
+                ctx.lineTo(x, y + size * IconConstants.SHAPE_FRACTION_THIRD);
                 ctx.closePath();
                 ctx.stroke();
                 break;
             case 'fa-layer-group': // Parallel
-                ctx.strokeRect(x - size / 3, y - size / 3, size / 2, size / 2);
-                ctx.strokeRect(x - size / 4, y - size / 4, size / 2, size / 2);
+                ctx.strokeRect(
+                    x - size * IconConstants.SHAPE_FRACTION_THIRD,
+                    y - size * IconConstants.SHAPE_FRACTION_THIRD,
+                    size * IconConstants.SHAPE_FRACTION_HALF,
+                    size * IconConstants.SHAPE_FRACTION_HALF
+                );
+                ctx.strokeRect(
+                    x - size * IconConstants.SHAPE_FRACTION_QUARTER,
+                    y - size * IconConstants.SHAPE_FRACTION_QUARTER,
+                    size * IconConstants.SHAPE_FRACTION_HALF,
+                    size * IconConstants.SHAPE_FRACTION_HALF
+                );
                 break;
             case 'fa-exchange-alt': // Inverter
                 ctx.beginPath();
-                ctx.arc(x, y, size / 3, 0, Math.PI * 2);
+                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
                 ctx.stroke();
-                ctx.fillRect(x - size / 4, y - 1, size / 2, 2);
+                ctx.fillRect(
+                    x - size * IconConstants.SHAPE_FRACTION_QUARTER,
+                    y - 1,
+                    size * IconConstants.SHAPE_FRACTION_HALF,
+                    IconConstants.LIST_LINE_HEIGHT
+                );
                 break;
             case 'fa-redo': // Repeater
                 ctx.beginPath();
-                ctx.arc(x, y, size / 3, Math.PI * 0.2, Math.PI * 1.8);
+                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, Math.PI * 0.2, Math.PI * 1.8);
                 ctx.stroke();
                 ctx.beginPath();
-                ctx.moveTo(x + size / 4, y - size / 4);
-                ctx.lineTo(x + size / 3, y - size / 3);
-                ctx.lineTo(x + size / 3, y - size / 6);
+                ctx.moveTo(x + size * IconConstants.SHAPE_FRACTION_QUARTER, y - size * IconConstants.SHAPE_FRACTION_QUARTER);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y - size * IconConstants.SHAPE_FRACTION_THIRD);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y - size * IconConstants.SHAPE_FRACTION_SIXTH);
                 ctx.fill();
                 break;
             case 'fa-times-circle': // Until Fail
                 ctx.beginPath();
-                ctx.arc(x, y, size / 3, 0, Math.PI * 2);
+                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.beginPath();
-                ctx.moveTo(x - size / 5, y - size / 5);
-                ctx.lineTo(x + size / 5, y + size / 5);
-                ctx.moveTo(x + size / 5, y - size / 5);
-                ctx.lineTo(x - size / 5, y + size / 5);
+                ctx.moveTo(x - size * IconConstants.SHAPE_FRACTION_FIFTH, y - size * IconConstants.SHAPE_FRACTION_FIFTH);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_FIFTH, y + size * IconConstants.SHAPE_FRACTION_FIFTH);
+                ctx.moveTo(x + size * IconConstants.SHAPE_FRACTION_FIFTH, y - size * IconConstants.SHAPE_FRACTION_FIFTH);
+                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_FIFTH, y + size * IconConstants.SHAPE_FRACTION_FIFTH);
                 ctx.stroke();
                 break;
             case 'fa-check-circle': // Until Success
                 ctx.beginPath();
-                ctx.arc(x, y, size / 3, 0, Math.PI * 2);
+                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.beginPath();
-                ctx.moveTo(x - size / 4, y);
-                ctx.lineTo(x - size / 8, y + size / 4);
-                ctx.lineTo(x + size / 3, y - size / 4);
+                ctx.moveTo(x - size * IconConstants.SHAPE_FRACTION_QUARTER, y);
+                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_EIGHTH, y + size * IconConstants.SHAPE_FRACTION_QUARTER);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y - size * IconConstants.SHAPE_FRACTION_QUARTER);
                 ctx.stroke();
                 break;
             case 'fa-bolt': // Action
                 ctx.beginPath();
-                ctx.moveTo(x, y - size / 2);
-                ctx.lineTo(x - size / 5, y);
-                ctx.lineTo(x + size / 10, y);
-                ctx.lineTo(x - size / 10, y + size / 2);
-                ctx.lineTo(x + size / 5, y - size / 10);
-                ctx.lineTo(x, y - size / 10);
+                ctx.moveTo(x, y - size * IconConstants.SHAPE_FRACTION_HALF);
+                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_FIFTH, y);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_TENTH, y);
+                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_TENTH, y + size * IconConstants.SHAPE_FRACTION_HALF);
+                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_FIFTH, y - size * IconConstants.SHAPE_FRACTION_TENTH);
+                ctx.lineTo(x, y - size * IconConstants.SHAPE_FRACTION_TENTH);
                 ctx.closePath();
                 ctx.fill();
                 break;
             default:
                 // Default circle
                 ctx.beginPath();
-                ctx.arc(x, y, size / 3, 0, Math.PI * 2);
+                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
                 ctx.fill();
         }
     }
@@ -315,8 +352,8 @@ export class NodeRenderer {
      */
     private drawLabel(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, label: string, viewport: Viewport): void {
         const nodeWidth = NodeRenderer.getNodeWidth(node);
-        const fontSize = 14 / viewport.zoom;
-        const labelX = pos.x - nodeWidth / 2 + NodeRenderer.NODE_PADDING + 30;
+        const fontSize = Theme.layout.fontSize / viewport.zoom;
+        const labelX = pos.x - nodeWidth / 2 + NodeRenderer.NODE_PADDING + NodeConstants.ICON_OFFSET_X;
         const labelY = pos.y;
 
         ctx.fillStyle = '#E0E0E0';
@@ -333,20 +370,23 @@ export class NodeRenderer {
         if (status === NodeStatus.IDLE) return; // Don't draw anything for idle
 
         const nodeWidth = NodeRenderer.getNodeWidth(node);
-        const x = pos.x + nodeWidth / 2 - 12;
-        const y = pos.y - NodeRenderer.NODE_HEIGHT / 2 + 12;
-        const radius = 8;
+        const x = pos.x + nodeWidth / 2 - NodeConstants.STATUS_INDICATOR_OFFSET;
+        const y = pos.y - NodeRenderer.NODE_HEIGHT / 2 + NodeConstants.STATUS_INDICATOR_OFFSET;
+        const radius = NodeConstants.STATUS_INDICATOR_RADIUS;
 
         const color = NodeRenderer.STATUS_COLORS[status];
 
         // Add glow effect for active statuses
         if (status === NodeStatus.RUNNING) {
             // Pulsing glow for running
-            const pulseRadius = radius + Math.sin(Date.now() / 200) * 2 + 3;
+            const pulseRadius = radius +
+                Math.sin(Date.now() / PulseAnimationConstants.PULSE_SPEED) *
+                PulseAnimationConstants.PULSE_RADIUS_MIN +
+                PulseAnimationConstants.PULSE_RADIUS_MAX;
             ctx.shadowColor = color;
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = ShadowConstants.STATUS_RUNNING_BLUR;
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.3;
+            ctx.globalAlpha = PulseAnimationConstants.PULSE_OPACITY;
             ctx.beginPath();
             ctx.arc(x, y, pulseRadius, 0, Math.PI * 2);
             ctx.fill();
@@ -355,13 +395,13 @@ export class NodeRenderer {
         } else if (status === NodeStatus.SUCCESS || status === NodeStatus.FAILURE) {
             // Glow for completed statuses
             ctx.shadowColor = color;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = ShadowConstants.STATUS_COMPLETED_BLUR;
         }
 
         // Draw main status indicator
         ctx.fillStyle = color;
-        ctx.strokeStyle = '#1E1E1E';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = Theme.background;
+        ctx.lineWidth = StrokeConstants.PORT_BORDER;
 
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -388,7 +428,7 @@ export class NodeRenderer {
         // Draw actual port
         ctx.fillStyle = Theme.ui.connection;
         ctx.strokeStyle = Theme.grid;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = StrokeConstants.PORT_BORDER;
 
         ctx.beginPath();
         ctx.arc(portPos.x, portPos.y, NodeRenderer.PORT_RADIUS, 0, Math.PI * 2);
@@ -407,7 +447,7 @@ export class NodeRenderer {
             const portPos = positions[i];
             ctx.fillStyle = Theme.ui.connection;
             ctx.strokeStyle = Theme.grid;
-            ctx.lineWidth = 2;
+            ctx.lineWidth = StrokeConstants.PORT_BORDER;
 
             ctx.beginPath();
             ctx.arc(portPos.x, portPos.y, NodeRenderer.PORT_RADIUS, 0, Math.PI * 2);
@@ -422,8 +462,8 @@ export class NodeRenderer {
             // Draw circle with dashed border
             ctx.fillStyle = 'rgba(127, 140, 141, 0.3)';
             ctx.strokeStyle = Theme.ui.hover;
-            ctx.lineWidth = 2;
-            ctx.setLineDash([3, 3]);
+            ctx.lineWidth = StrokeConstants.PORT_BORDER;
+            ctx.setLineDash([ConnectionConstants.RESIZE_HANDLE_DASH_LONG, ConnectionConstants.RESIZE_HANDLE_DASH_SHORT]);
 
             ctx.beginPath();
             ctx.arc(addPortPos.x, addPortPos.y, NodeRenderer.ADD_PORT_RADIUS, 0, Math.PI * 2);
@@ -434,8 +474,8 @@ export class NodeRenderer {
 
             // Draw + symbol
             ctx.strokeStyle = Theme.ui.hover;
-            ctx.lineWidth = 2;
-            const plusSize = 3;
+            ctx.lineWidth = StrokeConstants.PORT_BORDER;
+            const plusSize = IconConstants.PLUS_SIZE;
 
             ctx.beginPath();
             ctx.moveTo(addPortPos.x - plusSize, addPortPos.y);

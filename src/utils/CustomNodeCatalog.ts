@@ -87,8 +87,6 @@ export class CustomNodeCatalog {
 
         // Persist to localStorage
         this.saveToLocalStorage();
-
-        console.log(`Custom node "${definition.label}" ${existing ? 'updated' : 'saved'} in catalog (v${fullDefinition.version})`);
     }
 
     /**
@@ -127,7 +125,6 @@ export class CustomNodeCatalog {
         this.customNodes.set(type, updated);
         this.saveToLocalStorage();
 
-        console.log(`Custom node "${updated.label}" updated to v${updated.version}`);
         return updated;
     }
 
@@ -176,7 +173,6 @@ export class CustomNodeCatalog {
         const deleted = this.customNodes.delete(type);
         if (deleted) {
             this.saveToLocalStorage();
-            console.log(`Custom node "${type}" deleted from catalog`);
         }
         return deleted;
     }
@@ -251,7 +247,6 @@ export class CustomNodeCatalog {
         node.versionHistory = sortedHistory.slice(0, keepCount);
 
         this.saveToLocalStorage();
-        console.log(`Pruned version history for "${node.label}" to ${keepCount} versions`);
         return true;
     }
 
@@ -288,7 +283,6 @@ export class CustomNodeCatalog {
 
         if (importedCount > 0) {
             this.saveToLocalStorage();
-            console.log(`Imported ${importedCount} custom node(s)`);
         }
     }
 
@@ -298,7 +292,6 @@ export class CustomNodeCatalog {
     public static clearAll(): void {
         this.customNodes.clear();
         this.saveToLocalStorage();
-        console.log('All custom nodes cleared');
     }
 
     /**

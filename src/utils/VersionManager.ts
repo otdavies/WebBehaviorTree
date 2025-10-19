@@ -39,7 +39,6 @@ export class VersionManager {
                 );
             }
 
-            console.log(`Migrating data from v${version} to next version...`);
             data = migration(data);
             version = parseFloat(data.version);
         }
@@ -80,8 +79,6 @@ export class VersionManager {
      * Adds parameters field to all nodes that don't have it
      */
     private static migrateV1_0_to_V1_1(data: any): any {
-        console.log('Applying migration: v1.0 → v1.1 (adding parameters support)');
-
         // Add parameters to all nodes
         if (data.tree && data.tree.nodes) {
             data.tree.nodes.forEach((node: any) => {
@@ -105,8 +102,6 @@ export class VersionManager {
      * Adds customNodes field for custom node catalog support
      */
     private static migrateV1_1_to_V1_2(data: any): any {
-        console.log('Applying migration: v1.1 → v1.2 (adding custom nodes catalog)');
-
         // Add customNodes array if it doesn't exist
         if (!data.customNodes) {
             data.customNodes = [];

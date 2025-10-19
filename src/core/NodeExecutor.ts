@@ -152,7 +152,6 @@ export class NodeExecutor {
 function OnStart() {
     // Initialize any state here
     // Access params: params.yourParameter
-    console.log('Node started');
 }
 
 // OnUpdate - called every tick, receives tick count
@@ -168,7 +167,6 @@ function OnUpdate(tick) {
 // OnEnd - called when node completes
 function OnEnd(status) {
     // Cleanup code
-    console.log('Node ended with:', status);
 }
 
 // Execute lifecycle

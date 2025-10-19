@@ -39,7 +39,7 @@ export class GoToNode extends TreeNode {
         return `// GoTo Node - Executes another action by name
 
 function OnStart() {
-    console.log('Looking for action:', params.targetName);
+    // Initialize GoTo execution
 }
 
 function OnUpdate(tick) {
@@ -47,7 +47,6 @@ function OnUpdate(tick) {
     const targetName = params.targetName;
 
     if (!targetName) {
-        console.log('No target name specified');
         return params.failIfNotFound ? NodeStatus.FAILURE : NodeStatus.SUCCESS;
     }
 
@@ -62,14 +61,11 @@ function OnUpdate(tick) {
     );
 
     if (!targetNode) {
-        console.log('Target action not found:', targetName);
         return params.failIfNotFound ? NodeStatus.FAILURE : NodeStatus.SUCCESS;
     }
 
     // Execute the target node's code
     if (targetNode.code) {
-        console.log('Executing target action:', targetName);
-
         // Create a function to execute the target's code
         try {
             const executeFunction = new Function(
@@ -93,7 +89,6 @@ function OnUpdate(tick) {
 
             return result;
         } catch (error) {
-            console.log('Error executing target:', error.message);
             return NodeStatus.FAILURE;
         }
     }
@@ -102,7 +97,7 @@ function OnUpdate(tick) {
 }
 
 function OnEnd(status) {
-    console.log('GoTo completed with status:', status);
+    // Cleanup if needed
 }
 
 // Execute lifecycle

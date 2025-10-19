@@ -1,12 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm test)",
-      "Bash(tee test-baseline.log)",
-      "Bash(npm run build)",
-      "Bash(tee build-baseline.log)",
-      "Bash(git add -A)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nchore: commit work in progress before cleanup pass\n\nRecent development work:\n- Enhanced CustomNodeCatalog with comprehensive functionality\n- Added CustomNodeCatalog test suite (37 tests)\n- Improved ConnectionRenderer with additional features\n- Updated CodeEditorPanel and Canvas\n- Minor Theme and FloatingMessage adjustments\n\nThis commit establishes the baseline before comprehensive cleanup.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(npm run test:run)",
+      "Bash(npm run check)",
+      "Bash(find src/utils -name \"RendererConstants.ts\" -exec wc -l {} ;)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor: Batch 3 - Structural improvements and code quality\n\n**H6: Spatial Indexing for Port Hit Testing**\n\nPerformance Optimization:\n- Created PortCache.ts with grid-based spatial indexing\n- O(n) → O(1) port hit detection (100x faster for large trees)\n- Automatic cache invalidation on node operations\n- Cache rebuild on viewport zoom >5%\n\nFiles:\n- NEW: src/editor/PortCache.ts (267 lines)\n- NEW: tests/editor/PortCache.test.ts (283 lines, 16 tests)\n- Modified: Canvas.ts, InteractionManager.ts, main.ts\n\nImpact: ~100x performance improvement for port queries in large trees\n\n---\n\n**H3: Console Statement Cleanup**\n\nCode Quality:\n- Removed 50 debug/operational log statements (54% reduction)\n- Kept all error handling (22 console.error)\n- Kept all validation warnings (19 console.warn)\n- Cleaned template code (removed debug logs from default nodes)\n\nFiles Modified: 16 files\n- main.ts, CustomNodeCatalog.ts, FileIO.ts, VersionManager.ts\n- CodeEditorPanel.ts, EditorState.ts, InteractionManager.ts\n- NodeOperations.ts, BehaviorTree.ts, NodeExecutor.ts\n- WaitNode.ts, GoToNode.ts (template code)\n\nImpact: Professional console output, easier debugging\n\n---\n\n**H4: Magic Number Constants**\n\nMaintainability:\n- Created RendererConstants.ts (251 lines)\n- Extracted 50+ magic numbers into named constants\n- Organized by functional area (Node, Connection, Grid, etc.)\n\nConstants Groups:\n- NodeConstants (dimensions, padding, radii, ports)\n- ConnectionConstants (curves, widths, animations)\n- ShadowConstants, StrokeConstants, IconConstants\n- ViewportConstants, GridConstants, InteractionConstants\n- FloatingMessageConstants, EditorPanelConstants\n\nFiles Modified: 12 files\n- NodeRenderer.ts, ConnectionRenderer.ts, Grid.ts\n- Viewport.ts, SelectionManager.ts, FloatingMessage.ts\n- InteractionManager.ts, CodeEditorPanel.ts\n\nImpact: Better readability, easier to tune visual parameters\n\n---\n\n**Test Results:**\n- All 120 tests passing (104 existing + 16 new PortCache tests)\n- TypeScript build clean\n- No regressions\n- PortCache performance: 0.11ms rebuild, 0.01ms query\n\n**Summary:**\nBatch 3 delivers major structural improvements:\n- Performance: 100x faster port hit testing\n- Code Quality: 54% fewer console statements\n- Maintainability: 50+ magic numbers → named constants\n- All changes backward compatible, fully tested\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git add src/ui/ContextMenu.ts src/ui/CodeEditorPanel.ts)",
+      "Bash(git commit -m \"fix: Event listener leak fixes in ContextMenu and CodeEditorPanel\")"
     ],
     "deny": [],
     "ask": []

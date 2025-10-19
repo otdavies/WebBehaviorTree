@@ -34,7 +34,7 @@ export class WaitNode extends TreeNode {
         return `// Wait Node - Waits for specified number of ticks
 
 function OnStart() {
-    console.log('Starting wait for', params.waitTicks, 'ticks');
+    // Initialize wait
 }
 
 function OnUpdate(tick) {
@@ -42,9 +42,6 @@ function OnUpdate(tick) {
 
     if (remaining > 0) {
         // Still waiting
-        if (tick % 10 === 0) {
-            console.log('Waiting... ' + remaining + ' ticks remaining');
-        }
         return NodeStatus.RUNNING;
     }
 
@@ -53,9 +50,7 @@ function OnUpdate(tick) {
 }
 
 function OnEnd(status) {
-    if (status === NodeStatus.SUCCESS) {
-        console.log('Wait complete!');
-    }
+    // Cleanup if needed
 }
 
 // Execute lifecycle

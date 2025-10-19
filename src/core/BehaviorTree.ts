@@ -350,8 +350,6 @@ export class BehaviorTree {
 
         // Store all deserialized nodes (includes disconnected nodes)
         this.deserializedNodes = Array.from(nodeMap.values());
-
-        console.log(`Loaded tree v${data.version} with ${nodeMap.size} nodes (${this.getAllNodes().length} connected, ${this.deserializedNodes.length - this.getAllNodes().length} disconnected)`);
     }
 
     /**

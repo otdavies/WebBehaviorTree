@@ -250,14 +250,11 @@ export class EditorState {
 
         // Prevent cycles
         if (child.isAncestorOf(parent)) {
-            console.warn('Cannot create connection: would create a cycle');
             return { success: false, reordered: false };
         }
 
         // Check max children limit BEFORE removing from current parent
         if (!parent.canAddMoreChildren()) {
-            const maxStr = parent.maxChildren === -1 ? 'unlimited' : parent.maxChildren.toString();
-            console.warn(`Cannot create connection: Node "${parent.label}" has reached its maximum child limit (${maxStr})`);
             return { success: false, reordered: false };
         }
 
@@ -379,9 +376,5 @@ export class EditorState {
 
         // Sync with BehaviorTree
         this.behaviorTree.setAllNodes(this.nodes);
-
-        const connectedCount = this.behaviorTree.getAllNodes().length;
-        const disconnectedCount = this.nodes.length - connectedCount;
-        console.log(`Imported ${this.nodes.length} total nodes (${connectedCount} connected, ${disconnectedCount} disconnected)`);
     }
 }

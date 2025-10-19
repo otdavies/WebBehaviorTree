@@ -96,7 +96,6 @@ export class FileIO {
             }
 
             localStorage.setItem(this.LOCALSTORAGE_KEY, json);
-            console.log(`Tree auto-saved to localStorage (${sizeKB.toFixed(0)}KB)`);
             return { success: true };
         } catch (error) {
             if ((error as any).name === 'QuotaExceededError') {
@@ -143,6 +142,5 @@ export class FileIO {
      */
     public static clearLocalStorage(): void {
         localStorage.removeItem(this.LOCALSTORAGE_KEY);
-        console.log('LocalStorage auto-save cleared');
     }
 }
