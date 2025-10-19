@@ -2,7 +2,13 @@ import { Canvas } from './Canvas.js';
 import { EditorState } from '../state/EditorState.js';
 import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
-import { RemoveNodesCommand, MoveNodesCommand } from '../commands/NodeCommands.js';
+import {
+    RemoveNodesAction,
+    MoveNodesAction,
+    AddNodeAction,
+    ConnectNodesAction,
+    DisconnectNodeAction
+} from '../actions/EditorActions.js';
 import { NodeRegistry } from '../core/NodeRegistry.js';
 import { Toast } from '../ui/Toast.js';
 
@@ -205,10 +211,10 @@ export class InteractionManager {
 
                     // Only create command if there was actual movement
                     if (delta.length() > 0.1) {
-                        const command = new MoveNodesCommand(selectedNodes, delta);
+                        const action = new MoveNodesAction(selectedNodes, delta);
                         // The movement already happened, so we just need to add to history
                         // without executing again
-                        this.editorState.commandHistory['undoStack'].push(command);
+                        this.editorState.commandHistory['undoStack'].push(action);
                         this.editorState.commandHistory['redoStack'] = [];
 
                         // Re-sort children of affected parents to maintain left-to-right order
@@ -254,27 +260,22 @@ export class InteractionManager {
             if (targetPort) {
                 // Create connection
                 const parent = this.editorState.tempConnection.from;
-                const result = this.editorState.connectNodes(
-                    parent,
-                    targetPort.node
-                );
+                const child = targetPort.node;
 
-                if (result.success) {
-                    // Flash the connections only if children were reordered
-                    if (result.reordered) {
-                        this.canvas.connectionRenderer.flashConnectionsForParent(parent);
-                    }
+                // Check if connection is valid before creating action
+                if (!parent.canAddMoreChildren()) {
+                    const maxStr = parent.maxChildren === 1 ? 'one child' : `${parent.maxChildren} children`;
+                    Toast.show(`This node can only have ${maxStr}`, 2000);
+                } else {
+                    // Create and execute the connect action
+                    const action = new ConnectNodesAction(this.editorState, parent, child);
+                    this.editorState.commandHistory.execute(action);
+
+                    // Flash the connections after connection is made
+                    this.canvas.connectionRenderer.flashConnectionsForParent(parent);
 
                     // Update root: Find Start node or use topmost parentless node
                     this.updateRoot();
-                } else {
-                    // Show error feedback
-                    if (!parent.canAddMoreChildren()) {
-                        const maxStr = parent.maxChildren === 1 ? 'one child' : `${parent.maxChildren} children`;
-                        Toast.show(`This node can only have ${maxStr}`, 2000);
-                    } else {
-                        Toast.show('Cannot create connection', 2000);
-                    }
                 }
             }
 
@@ -366,8 +367,8 @@ export class InteractionManager {
         if (e.key === 'Delete' || e.key === 'Backspace') {
             const selectedNodes = this.canvas.selectionManager.getSelectedNodes();
             if (selectedNodes.length > 0) {
-                const command = new RemoveNodesCommand(this.editorState, selectedNodes);
-                this.editorState.commandHistory.execute(command);
+                const action = new RemoveNodesAction(this.editorState, selectedNodes);
+                this.editorState.commandHistory.execute(action);
                 this.canvas.selectionManager.clearSelection();
                 e.preventDefault();
             }
@@ -479,7 +480,7 @@ export class InteractionManager {
         // Clear current selection
         this.canvas.selectionManager.clearSelection();
 
-        // Create new nodes from clipboard
+        // Create new nodes from clipboard using actions
         this.clipboard.nodes.forEach((nodeData: any) => {
             const nodeType = nodeData.type;
             const factory = this.getNodeClass(nodeType);
@@ -496,14 +497,16 @@ export class InteractionManager {
             // Store ID mapping for connection restoration
             idMap.set(oldId, newId);
 
-            this.editorState.addNode(node);
+            // Use AddNodeAction to add the node
+            const addAction = new AddNodeAction(this.editorState, node);
+            this.editorState.commandHistory.execute(addAction);
             newNodes.push(node);
 
             // Select the newly pasted node
             this.canvas.selectionManager.selectNode(node, true);
         });
 
-        // Restore connections between pasted nodes
+        // Restore connections between pasted nodes using actions
         this.clipboard.connections.forEach(conn => {
             const newParentId = idMap.get(conn.parentId);
             const newChildId = idMap.get(conn.childId);
@@ -513,7 +516,8 @@ export class InteractionManager {
                 const child = this.editorState.findNodeById(newChildId);
 
                 if (parent && child) {
-                    this.editorState.connectNodes(parent, child, conn.index);
+                    const connectAction = new ConnectNodesAction(this.editorState, parent, child, conn.index);
+                    this.editorState.commandHistory.execute(connectAction);
                 }
             }
         });
@@ -549,7 +553,8 @@ export class InteractionManager {
         if (port.type === 'input') {
             // Input port: disconnect this node from its parent
             if (node.parent) {
-                node.parent.removeChild(node);
+                const action = new DisconnectNodeAction(this.editorState, node);
+                this.editorState.commandHistory.execute(action);
                 Toast.show(`Disconnected ${node.label} from parent`, 1500);
                 this.updateRoot();
             } else {
@@ -559,7 +564,8 @@ export class InteractionManager {
             // Output port: disconnect the child at this index
             if (port.index >= 0 && port.index < node.children.length) {
                 const child = node.children[port.index];
-                node.removeChild(child);
+                const action = new DisconnectNodeAction(this.editorState, child);
+                this.editorState.commandHistory.execute(action);
                 Toast.show(`Disconnected ${child.label} from ${node.label}`, 1500);
                 this.updateRoot();
             }

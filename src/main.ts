@@ -19,6 +19,7 @@ import { registerDefaultNodes } from './core/DefaultNodes.js';
 import { Toast } from './ui/Toast.js';
 import { CustomNodeCatalog } from './utils/CustomNodeCatalog.js';
 import { CustomActionNode } from './nodes/leaves/CustomActionNode.js';
+import { AddNodeAction, ClearAllNodesAction, ImportTreeAction } from './actions/EditorActions.js';
 
 // Make NodeExecutor and CustomNodeCatalog available globally for CodeEditorPanel
 (window as any).NodeExecutor = NodeExecutor;
@@ -86,11 +87,16 @@ function createNodeByType(type: string): TreeNode {
 
 /**
  * Creates a new node at a given world position
+ * Uses AddNodeAction for undo/redo support
  */
 function createNode(type: string, worldPos: Vector2): TreeNode {
     const node = createNodeByType(type);
     node.position = worldPos;
-    editorState.addNode(node);
+
+    // Use action for undo/redo support
+    const action = new AddNodeAction(editorState, node);
+    editorState.commandHistory.execute(action);
+
     return node;
 }
 
@@ -175,8 +181,9 @@ function importTree(data: any): void {
             console.log(`Imported ${data.customNodes.length} custom node definition(s)`);
         }
 
-        // Use new import method that preserves disconnected nodes
-        editorState.importTree(data);
+        // Use ImportTreeAction for undo/redo support
+        const action = new ImportTreeAction(editorState, data);
+        editorState.commandHistory.execute(action);
 
         Toast.show('Tree loaded successfully', 2000);
         console.log('Tree imported successfully');
@@ -189,12 +196,16 @@ function importTree(data: any): void {
 
 /**
  * Loads the tree from localStorage (auto-load on startup)
+ * Note: Uses ImportTreeAction directly (not via commandHistory) since this
+ * is an initialization step that shouldn't be undoable
  */
 function loadTreeFromStorage(): boolean {
     try {
         const data = FileIO.loadFromLocalStorage();
         if (data) {
-            editorState.importTree(data);
+            // Use action directly for consistency, but don't add to history
+            const action = new ImportTreeAction(editorState, data);
+            action.execute();
             console.log('Tree loaded from localStorage');
             return true;
         }
@@ -211,7 +222,8 @@ function loadTreeFromStorage(): boolean {
  * Clears the entire tree
  */
 function clearTree(): void {
-    editorState.clearAll();
+    const action = new ClearAllNodesAction(editorState);
+    editorState.commandHistory.execute(action);
     console.log('Tree cleared');
 }
 
@@ -268,10 +280,10 @@ function initializeApp(): void {
 
     // Initialize UI components
     toolbar = new Toolbar(editorState.behaviorTree);
-    settingsPanel = new SettingsPanel(editorState);
-    codeEditorPanel = new CodeEditorPanel(editorState);
+    settingsPanel = new SettingsPanel(editorState, editorState.commandHistory);
+    codeEditorPanel = new CodeEditorPanel(editorState, editorState.commandHistory);
     contextMenu = new ContextMenu();
-    inspectorPanel = new InspectorPanel();
+    inspectorPanel = new InspectorPanel(editorState.commandHistory);
 
     // Wire up code editor panel save callback (for Ctrl+S)
     codeEditorPanel.onSaveToFile = saveTree;

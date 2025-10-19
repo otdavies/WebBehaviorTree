@@ -1,10 +1,13 @@
 import { EditorState } from '../state/EditorState.js';
+import { ToggleGridAction } from '../actions/EditorActions.js';
+import { CommandHistory } from '../core/Command.js';
 
 /**
  * SettingsPanel: Manages the settings sidebar
  */
 export class SettingsPanel {
     private editorState: EditorState;
+    private commandHistory: CommandHistory;
     private panel: HTMLElement;
     private btnClose: HTMLButtonElement;
     private btnExport: HTMLButtonElement;
@@ -20,8 +23,9 @@ export class SettingsPanel {
     public onImport?: (data: any) => void;
     public onClear?: () => void;
 
-    constructor(editorState: EditorState) {
+    constructor(editorState: EditorState, commandHistory: CommandHistory) {
         this.editorState = editorState;
+        this.commandHistory = commandHistory;
 
         // Get DOM elements
         this.panel = document.getElementById('settings-panel')!;
@@ -82,7 +86,11 @@ export class SettingsPanel {
         });
 
         this.showGridCheckbox.addEventListener('change', () => {
-            this.editorState.showGrid = this.showGridCheckbox.checked;
+            // Only execute action if the value actually changed
+            if (this.editorState.showGrid !== this.showGridCheckbox.checked) {
+                const action = new ToggleGridAction(this.editorState);
+                this.commandHistory.execute(action);
+            }
         });
 
         this.settingsTickRateSlider.addEventListener('input', () => {
