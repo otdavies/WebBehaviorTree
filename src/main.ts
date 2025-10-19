@@ -7,6 +7,7 @@ import { EditorState } from './state/EditorState.js';
 import { Canvas } from './editor/Canvas.js';
 import { InteractionManager } from './editor/InteractionManager.js';
 import { Toolbar } from './ui/Toolbar.js';
+import { StatusBar } from './ui/StatusBar.js';
 import { SettingsPanel } from './ui/SettingsPanel.js';
 import { CodeEditorPanel } from './ui/CodeEditorPanel.js';
 import { ContextMenu } from './ui/ContextMenu.js';
@@ -19,7 +20,7 @@ import { registerDefaultNodes } from './core/DefaultNodes.js';
 import { Toast } from './ui/Toast.js';
 import { CustomNodeCatalog } from './utils/CustomNodeCatalog.js';
 import { CustomActionNode } from './nodes/leaves/CustomActionNode.js';
-import { AddNodeAction, ClearAllNodesAction, ImportTreeAction } from './actions/EditorActions.js';
+import { AddNodeOperation, ClearAllNodesOperation, ImportTreeOperation } from './actions/EditorActions.js';
 
 // Make NodeExecutor and CustomNodeCatalog available globally for CodeEditorPanel
 (window as any).NodeExecutor = NodeExecutor;
@@ -49,12 +50,19 @@ function registerCustomNodesFromCatalog(): void {
             label: customNode.label,
             description: customNode.description || 'Custom user-defined node',
             icon: customNode.icon,
-            factory: () => new CustomActionNode(
-                customNode.type,
-                customNode.label,
-                customNode.code,
-                customNode.icon
-            ),
+            factory: () => {
+                const node = new CustomActionNode(
+                    customNode.type,
+                    customNode.label,
+                    customNode.code,
+                    customNode.icon
+                );
+                // Set library tracking metadata
+                node.libraryType = customNode.type;
+                node.libraryVersion = customNode.version;
+                node.isModified = false;
+                return node;
+            },
             tags: customNode.tags || ['custom', customNode.label.toLowerCase()]
         });
     }
@@ -69,6 +77,7 @@ let editorState: EditorState;
 let canvas: Canvas;
 let interactionManager: InteractionManager;
 let toolbar: Toolbar;
+let statusBar: StatusBar;
 let settingsPanel: SettingsPanel;
 let codeEditorPanel: CodeEditorPanel;
 let contextMenu: ContextMenu;
@@ -87,15 +96,15 @@ function createNodeByType(type: string): TreeNode {
 
 /**
  * Creates a new node at a given world position
- * Uses AddNodeAction for undo/redo support
+ * Uses AddNodeOperation for undo/redo support
  */
 function createNode(type: string, worldPos: Vector2): TreeNode {
     const node = createNodeByType(type);
     node.position = worldPos;
 
-    // Use action for undo/redo support
-    const action = new AddNodeAction(editorState, node);
-    editorState.commandHistory.execute(action);
+    // Use operation for undo/redo support
+    const operation = new AddNodeOperation(editorState, node);
+    editorState.operationHistory.execute(operation);
 
     return node;
 }
@@ -181,9 +190,9 @@ function importTree(data: any): void {
             console.log(`Imported ${data.customNodes.length} custom node definition(s)`);
         }
 
-        // Use ImportTreeAction for undo/redo support
-        const action = new ImportTreeAction(editorState, data);
-        editorState.commandHistory.execute(action);
+        // Use ImportTreeOperation for undo/redo support
+        const operation = new ImportTreeOperation(editorState, data);
+        editorState.operationHistory.execute(operation);
 
         Toast.show('Tree loaded successfully', 2000);
         console.log('Tree imported successfully');
@@ -196,16 +205,16 @@ function importTree(data: any): void {
 
 /**
  * Loads the tree from localStorage (auto-load on startup)
- * Note: Uses ImportTreeAction directly (not via commandHistory) since this
+ * Note: Uses ImportTreeOperation directly (not via commandHistory) since this
  * is an initialization step that shouldn't be undoable
  */
 function loadTreeFromStorage(): boolean {
     try {
         const data = FileIO.loadFromLocalStorage();
         if (data) {
-            // Use action directly for consistency, but don't add to history
-            const action = new ImportTreeAction(editorState, data);
-            action.execute();
+            // Use operation directly for consistency, but don't add to history
+            const operation = new ImportTreeOperation(editorState, data);
+            operation.execute();
             console.log('Tree loaded from localStorage');
             return true;
         }
@@ -222,8 +231,8 @@ function loadTreeFromStorage(): boolean {
  * Clears the entire tree
  */
 function clearTree(): void {
-    const action = new ClearAllNodesAction(editorState);
-    editorState.commandHistory.execute(action);
+    const operation = new ClearAllNodesOperation(editorState);
+    editorState.operationHistory.execute(operation);
     console.log('Tree cleared');
 }
 
@@ -280,10 +289,11 @@ function initializeApp(): void {
 
     // Initialize UI components
     toolbar = new Toolbar(editorState.behaviorTree);
-    settingsPanel = new SettingsPanel(editorState, editorState.commandHistory);
-    codeEditorPanel = new CodeEditorPanel(editorState, editorState.commandHistory);
+    statusBar = new StatusBar(editorState.behaviorTree, editorState);
+    settingsPanel = new SettingsPanel(editorState, editorState.operationHistory);
+    codeEditorPanel = new CodeEditorPanel(editorState, editorState.operationHistory);
     contextMenu = new ContextMenu();
-    inspectorPanel = new InspectorPanel(editorState.commandHistory);
+    inspectorPanel = new InspectorPanel(editorState.operationHistory);
 
     // Wire up code editor panel save callback (for Ctrl+S)
     codeEditorPanel.onSaveToFile = saveTree;
@@ -297,15 +307,76 @@ function initializeApp(): void {
             label: customNodeDef.label,
             description: customNodeDef.description || 'Custom user-defined node',
             icon: customNodeDef.icon,
-            factory: () => new CustomActionNode(
-                customNodeDef.type,
-                customNodeDef.label,
-                customNodeDef.code,
-                customNodeDef.icon
-            ),
+            factory: () => {
+                const node = new CustomActionNode(
+                    customNodeDef.type,
+                    customNodeDef.label,
+                    customNodeDef.code,
+                    customNodeDef.icon
+                );
+                // Set library tracking metadata
+                node.libraryType = customNodeDef.type;
+                node.libraryVersion = customNodeDef.version;
+                node.isModified = false;
+                return node;
+            },
             tags: customNodeDef.tags || ['custom', customNodeDef.label.toLowerCase()]
         });
         console.log(`Registered custom node "${customNodeDef.label}" immediately`);
+    };
+
+    // Wire up library definition updated callback
+    codeEditorPanel.onLibraryDefinitionUpdated = (libraryType: string, updatedDef: any) => {
+        console.log(`Library definition updated: ${libraryType} (v${updatedDef.version})`);
+
+        let syncedCount = 0;
+
+        // Find all nodes in the tree that match this library type
+        for (const node of editorState.nodes) {
+            // Skip if not from this library
+            if (node.libraryType !== libraryType) continue;
+
+            // Skip if node is modified (user has customized it)
+            if (node.isModified) {
+                console.log(`  Skipping modified node: ${node.label} (${node.id})`);
+                continue;
+            }
+
+            // Update the node's code and version
+            node.code = updatedDef.code;
+            node.libraryVersion = updatedDef.version;
+            syncedCount++;
+
+            console.log(`  Synced node: ${node.label} (${node.id}) to v${updatedDef.version}`);
+        }
+
+        // Re-register the factory with updated code
+        NodeRegistry.register({
+            type: updatedDef.type,
+            category: updatedDef.category,
+            label: updatedDef.label,
+            description: updatedDef.description || 'Custom user-defined node',
+            icon: updatedDef.icon,
+            factory: () => {
+                const node = new CustomActionNode(
+                    updatedDef.type,
+                    updatedDef.label,
+                    updatedDef.code,
+                    updatedDef.icon
+                );
+                // Set library tracking metadata
+                node.libraryType = updatedDef.type;
+                node.libraryVersion = updatedDef.version;
+                node.isModified = false;
+                return node;
+            },
+            tags: updatedDef.tags || ['custom', updatedDef.label.toLowerCase()]
+        });
+
+        console.log(`Synced ${syncedCount} node(s) to library v${updatedDef.version}`);
+
+        // Save the tree after syncing
+        saveTree();
     };
 
     // Wire up toolbar
@@ -321,6 +392,7 @@ function initializeApp(): void {
     // Wire up context menu
     contextMenu.onNodeTypeSelect = (type: string, worldPos: Vector2) => {
         createNode(type, worldPos);
+        statusBar.update(); // Update status bar when node is added
     };
 
     // Wire up inspector panel
@@ -350,6 +422,9 @@ function initializeApp(): void {
     let previousNodeStatuses = new Map<string, string>();
 
     editorState.behaviorTree.onTick(() => {
+        // Update status bar on each tick
+        statusBar.update();
+
         // Check all nodes for status changes
         editorState.nodes.forEach(node => {
             const prevStatus = previousNodeStatuses.get(node.id);

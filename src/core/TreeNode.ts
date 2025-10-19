@@ -53,6 +53,11 @@ export abstract class TreeNode {
     // Exposed parameters (for inspector)
     public parameters: NodeParameters = new NodeParameters();
 
+    // Library sync tracking (for custom nodes)
+    public libraryType?: string;      // The custom node type this was created from (e.g., "custom_walk")
+    public isModified: boolean = false;  // Whether this instance has been modified from the library definition
+    public libraryVersion?: number;   // The version of the library definition this was synced with
+
     // Maximum number of children allowed (-1 for unlimited)
     public maxChildren: number = -1;
 
@@ -197,7 +202,10 @@ export abstract class TreeNode {
             code: this.code,
             config: this.config,
             parameters: this.parameters.toJSON(),
-            children: this.children.map(child => child.id)
+            children: this.children.map(child => child.id),
+            libraryType: this.libraryType,
+            isModified: this.isModified,
+            libraryVersion: this.libraryVersion
         };
     }
 
@@ -266,6 +274,17 @@ export abstract class TreeNode {
                     `Invalid parameters for node ${this.id}: expected object. Skipping parameters.`
                 );
             }
+        }
+
+        // Update library sync tracking if provided
+        if (data.libraryType !== undefined) {
+            this.libraryType = data.libraryType;
+        }
+        if (data.isModified !== undefined) {
+            this.isModified = data.isModified;
+        }
+        if (data.libraryVersion !== undefined) {
+            this.libraryVersion = data.libraryVersion;
         }
     }
 
