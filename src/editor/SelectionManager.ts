@@ -1,5 +1,6 @@
 import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
+import { SelectionConstants } from '../utils/RendererConstants.js';
 
 /**
  * SelectionManager: Handles node selection (single, multi, box select)
@@ -220,9 +221,9 @@ export class SelectionManager {
         const height = box.max.y - box.min.y;
 
         ctx.strokeStyle = '#F39C12';
-        ctx.fillStyle = 'rgba(243, 156, 18, 0.1)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
+        ctx.fillStyle = `rgba(243, 156, 18, ${SelectionConstants.BOX_FILL_OPACITY})`;
+        ctx.lineWidth = SelectionConstants.BOX_STROKE_WIDTH;
+        ctx.setLineDash([SelectionConstants.BOX_DASH_LONG, SelectionConstants.BOX_DASH_SHORT]);
 
         ctx.fillRect(box.min.x, box.min.y, width, height);
         ctx.strokeRect(box.min.x, box.min.y, width, height);

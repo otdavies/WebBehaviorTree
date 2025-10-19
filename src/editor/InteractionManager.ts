@@ -80,12 +80,20 @@ export class InteractionManager {
         // Left click
         if (e.button === 0) {
             // Check for port clicks FIRST (ports extend outside node bodies)
+            // Use port cache for O(1) lookup instead of O(n) iteration
             let clickedPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number; isAddPort?: boolean } } | null = null;
-            for (const node of this.editorState.nodes) {
-                const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
-                if (port) {
-                    clickedPort = { node, port };
-                    break;
+
+            // Try cache first (fast path)
+            if (this.canvas.portCache.isValidCache()) {
+                clickedPort = this.canvas.portCache.getPortAtPoint(worldPos);
+            } else {
+                // Fallback to O(n) search if cache is invalid (rebuild will happen later)
+                for (const node of this.editorState.nodes) {
+                    const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
+                    if (port) {
+                        clickedPort = { node, port };
+                        break;
+                    }
                 }
             }
 
@@ -135,12 +143,23 @@ export class InteractionManager {
         const delta = worldPos.subtract(this.lastMousePos);
 
         // Check for port hits FIRST (ports extend outside node bodies)
+        // Use port cache for O(1) lookup instead of O(n) iteration
         let portNode: TreeNode | null = null;
-        for (const node of this.editorState.nodes) {
-            const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
-            if (port) {
-                portNode = node;
-                break;
+
+        // Try cache first (fast path)
+        if (this.canvas.portCache.isValidCache()) {
+            const portHit = this.canvas.portCache.getPortAtPoint(worldPos);
+            if (portHit) {
+                portNode = portHit.node;
+            }
+        } else {
+            // Fallback to O(n) search if cache is invalid
+            for (const node of this.editorState.nodes) {
+                const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
+                if (port) {
+                    portNode = node;
+                    break;
+                }
             }
         }
 
@@ -170,6 +189,8 @@ export class InteractionManager {
             this.canvas.selectionManager.getSelectedNodes().forEach(node => {
                 node.position = node.position.add(delta);
             });
+            // Invalidate port cache when nodes move
+            this.canvas.invalidatePortCache();
         }
 
         // Connecting
@@ -235,6 +256,9 @@ export class InteractionManager {
                                 this.canvas.connectionRenderer.flashConnectionsForParent(parent);
                             }
                         });
+
+                        // Rebuild port cache after nodes moved
+                        this.canvas.rebuildPortCache();
                     }
                 }
             }
@@ -246,13 +270,24 @@ export class InteractionManager {
         // End connecting
         if (this.isConnecting && this.editorState.tempConnection) {
             // Check for input port hit on ANY node
+            // Use port cache for O(1) lookup instead of O(n) iteration
             let targetPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number } } | null = null;
-            for (const node of this.editorState.nodes) {
-                if (node === this.editorState.tempConnection.from) continue; // Can't connect to self
-                const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
-                if (port && port.type === 'input') {
-                    targetPort = { node, port };
-                    break;
+
+            // Try cache first (fast path)
+            if (this.canvas.portCache.isValidCache()) {
+                const portHit = this.canvas.portCache.getPortAtPoint(worldPos);
+                if (portHit && portHit.port.type === 'input' && portHit.node !== this.editorState.tempConnection.from) {
+                    targetPort = portHit;
+                }
+            } else {
+                // Fallback to O(n) search if cache is invalid
+                for (const node of this.editorState.nodes) {
+                    if (node === this.editorState.tempConnection.from) continue; // Can't connect to self
+                    const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
+                    if (port && port.type === 'input') {
+                        targetPort = { node, port };
+                        break;
+                    }
                 }
             }
 
@@ -272,6 +307,9 @@ export class InteractionManager {
 
                     // Flash the connections after connection is made
                     this.canvas.connectionRenderer.flashConnectionsForParent(parent);
+
+                    // Rebuild port cache after connection (output ports may have changed)
+                    this.canvas.rebuildPortCache();
 
                     // Update root: Find Start node or use topmost parentless node
                     this.updateRoot();
@@ -297,10 +335,17 @@ export class InteractionManager {
     private onWheel = (e: WheelEvent): void => {
         e.preventDefault();
 
+        const oldZoom = this.canvas.viewport.zoom;
         const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
         const screenPos = new Vector2(e.offsetX, e.offsetY);
 
         this.canvas.viewport.zoomAt(screenPos, zoomDelta);
+
+        // Rebuild port cache if zoom changed significantly (> 5% change)
+        const zoomChangeRatio = Math.abs(this.canvas.viewport.zoom - oldZoom) / oldZoom;
+        if (zoomChangeRatio > 0.05) {
+            this.canvas.rebuildPortCache();
+        }
     };
 
     /**
@@ -339,6 +384,29 @@ export class InteractionManager {
             return;
         }
 
+        // If we didn't find a port in the cache, try fallback
+        if (!clickedPort) {
+            // Use port cache for O(1) lookup instead of O(n) iteration
+            if (this.canvas.portCache.isValidCache()) {
+                clickedPort = this.canvas.portCache.getPortAtPoint(worldPos);
+            } else {
+                // Fallback to O(n) search if cache is invalid
+                for (const node of this.editorState.nodes) {
+                    const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
+                    if (port) {
+                        clickedPort = { node, port };
+                        break;
+                    }
+                }
+            }
+
+            // Handle port disconnection (if we found one)
+            if (clickedPort) {
+                this.handlePortDisconnect(clickedPort.node, clickedPort.port);
+                return;
+            }
+        }
+
         // Check for node click
         const clickedNode = this.editorState.findNodeAtPosition(worldPos, this.canvas.nodeRenderer);
 
@@ -369,6 +437,8 @@ export class InteractionManager {
                 const operation = new RemoveNodesOperation(this.editorState, selectedNodes);
                 this.editorState.operationHistory.execute(operation);
                 this.canvas.selectionManager.clearSelection();
+                // Rebuild port cache after nodes removed
+                this.canvas.rebuildPortCache();
                 e.preventDefault();
             }
         }
@@ -376,6 +446,8 @@ export class InteractionManager {
         // Undo (Ctrl+Z)
         if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
             this.editorState.operationHistory.undo();
+            // Rebuild port cache after undo
+            this.canvas.rebuildPortCache();
             e.preventDefault();
         }
 
@@ -383,6 +455,8 @@ export class InteractionManager {
         if ((e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
             (e.key === 'y' && (e.ctrlKey || e.metaKey))) {
             this.editorState.operationHistory.redo();
+            // Rebuild port cache after redo
+            this.canvas.rebuildPortCache();
             e.preventDefault();
         }
 
@@ -462,8 +536,6 @@ export class InteractionManager {
             nodes: nodes.map(node => node.toJSON()),
             connections: connections
         };
-
-        console.log(`Copied ${nodes.length} node(s) with ${connections.length} connection(s)`);
     }
 
     /**
@@ -521,7 +593,8 @@ export class InteractionManager {
             }
         });
 
-        console.log(`Pasted ${newNodes.length} node(s) with ${this.clipboard.connections.length} connection(s)`);
+        // Rebuild port cache after pasting nodes
+        this.canvas.rebuildPortCache();
     }
 
     /**
@@ -566,6 +639,8 @@ export class InteractionManager {
                 const operation = new DisconnectNodeOperation(this.editorState, child);
                 this.editorState.operationHistory.execute(operation);
                 Toast.show(`Disconnected ${child.label} from ${node.label}`, 1500);
+                // Rebuild port cache after disconnection
+                this.canvas.rebuildPortCache();
                 this.updateRoot();
             }
         }

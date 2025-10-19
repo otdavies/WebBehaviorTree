@@ -1,4 +1,5 @@
 import { Vector2 } from '../utils/Vector2.js';
+import { FloatingMessageConstants } from '../utils/RendererConstants.js';
 
 /**
  * FloatingMessage: MMO-style floating text that rises and fades out
@@ -12,13 +13,13 @@ export class FloatingMessage {
     public velocity: Vector2;
     public isAlive: boolean = true;
 
-    constructor(position: Vector2, text: string, color: string = '#FFFFFF', lifetime: number = 2000) {
+    constructor(position: Vector2, text: string, color: string = '#FFFFFF', lifetime: number = FloatingMessageConstants.DEFAULT_LIFETIME) {
         this.position = position.clone();
         this.text = text;
         this.color = color;
         this.lifetime = lifetime;
         this.maxLifetime = lifetime;
-        this.velocity = new Vector2(0, -50); // Float upwards
+        this.velocity = new Vector2(0, FloatingMessageConstants.VELOCITY_Y); // Float upwards
     }
 
     /**
@@ -52,13 +53,13 @@ export class FloatingMessage {
         ctx.save();
 
         // Draw text shadow for better visibility
-        ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.font = `${FloatingMessageConstants.FONT_WEIGHT} ${FloatingMessageConstants.FONT_SIZE}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         // Shadow
-        ctx.strokeStyle = `rgba(0, 0, 0, ${opacity * 0.8})`;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = `rgba(0, 0, 0, ${opacity * FloatingMessageConstants.SHADOW_OPACITY})`;
+        ctx.lineWidth = FloatingMessageConstants.SHADOW_LINE_WIDTH;
         ctx.strokeText(this.text, this.position.x, this.position.y);
 
         // Main text

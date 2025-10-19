@@ -1,4 +1,5 @@
 import { Vector2 } from '../utils/Vector2.js';
+import { ViewportConstants } from '../utils/RendererConstants.js';
 
 /**
  * Viewport: Manages camera position, zoom, and coordinate transformations.
@@ -11,11 +12,11 @@ export class Viewport {
     public offset: Vector2 = new Vector2(0, 0);
 
     // Zoom level (1.0 = 100%, 0.5 = 50%, 2.0 = 200%)
-    public zoom: number = 1.0;
+    public zoom: number = ViewportConstants.DEFAULT_ZOOM;
 
     // Zoom limits
-    public minZoom: number = 0.1;
-    public maxZoom: number = 3.0;
+    public minZoom: number = ViewportConstants.MIN_ZOOM;
+    public maxZoom: number = ViewportConstants.MAX_ZOOM;
 
     // Canvas dimensions (in CSS pixels)
     private canvasWidth: number = 0;
@@ -97,7 +98,7 @@ export class Viewport {
      */
     public reset(): void {
         this.offset = new Vector2(this.canvasWidth / 2, this.canvasHeight / 2);
-        this.zoom = 1.0;
+        this.zoom = ViewportConstants.DEFAULT_ZOOM;
     }
 
     /**

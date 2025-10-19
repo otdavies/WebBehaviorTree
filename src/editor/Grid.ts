@@ -1,4 +1,5 @@
 import { Viewport } from './Viewport.js';
+import { GridConstants } from '../utils/RendererConstants.js';
 
 /**
  * Grid: Renders a background grid for the canvas.
@@ -7,10 +8,10 @@ import { Viewport } from './Viewport.js';
  */
 export class Grid {
     public enabled: boolean = true;
-    public cellSize: number = 20; // pixels at 100% zoom
+    public cellSize: number = GridConstants.DEFAULT_CELL_SIZE; // pixels at 100% zoom
     public lineColor: string = '#2D2D2D';
     public majorLineColor: string = '#404040';
-    public majorLineInterval: number = 5; // Every 5th line is major
+    public majorLineInterval: number = GridConstants.MAJOR_LINE_INTERVAL; // Every 5th line is major
 
     /**
      * Renders the grid
@@ -29,7 +30,7 @@ export class Grid {
         const startY = Math.floor(bounds.min.y / cellSizeWorld) * cellSizeWorld;
         const endY = Math.ceil(bounds.max.y / cellSizeWorld) * cellSizeWorld;
 
-        ctx.lineWidth = 1 / viewport.zoom; // Keep lines thin regardless of zoom
+        ctx.lineWidth = GridConstants.LINE_WIDTH / viewport.zoom; // Keep lines thin regardless of zoom
 
         // Draw vertical lines
         for (let x = startX; x <= endX; x += cellSizeWorld) {

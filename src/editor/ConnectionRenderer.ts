@@ -2,6 +2,7 @@ import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
 import { NodeRenderer } from './NodeRenderer.js';
 import { Theme } from '../utils/Theme.js';
+import { ConnectionConstants, ConnectionShadowConstants } from '../utils/RendererConstants.js';
 
 /**
  * ConnectionRenderer: Draws bezier curves between parent and child nodes.
@@ -9,15 +10,15 @@ import { Theme } from '../utils/Theme.js';
 export class ConnectionRenderer {
     public lineColor: string = Theme.ui.connection;
     public activeLineColor: string = Theme.ui.hover;
-    public lineWidth: number = 2;
+    public lineWidth: number = ConnectionConstants.DEFAULT_LINE_WIDTH;
 
     // Flash animation for reordered connections
     private flashingConnections: Map<string, number> = new Map(); // key: "parentId-childId", value: timestamp
-    private flashDuration: number = 500; // milliseconds
+    private flashDuration: number = ConnectionConstants.FLASH_DURATION; // milliseconds
 
     // Flow animation for active connections
     private animationOffset: number = 0;
-    private flowSpeed: number = 60; // pixels per second
+    private flowSpeed: number = ConnectionConstants.FLOW_SPEED; // pixels per second
 
     /**
      * Updates animation state (call this every frame)
@@ -26,7 +27,7 @@ export class ConnectionRenderer {
     public updateAnimation(deltaTime: number): void {
         this.animationOffset += this.flowSpeed * deltaTime;
         // Keep offset within dash pattern range to prevent overflow
-        if (this.animationOffset > 16) {
+        if (this.animationOffset > ConnectionConstants.FLOW_DASH_RESET) {
             this.animationOffset = 0;
         }
     }
@@ -130,7 +131,7 @@ export class ConnectionRenderer {
         flashIntensity: number = 0,
         isActive: boolean = false
     ): void {
-        const controlPointOffset = Math.abs(to.y - from.y) * 0.5;
+        const controlPointOffset = Math.abs(to.y - from.y) * ConnectionConstants.CONTROL_POINT_OFFSET;
 
         const cp1 = new Vector2(from.x, from.y + controlPointOffset);
         const cp2 = new Vector2(to.x, to.y - controlPointOffset);
@@ -139,21 +140,21 @@ export class ConnectionRenderer {
         if (isActive) {
             // Draw glow layer for active connections
             ctx.shadowColor = Theme.ui.activeConnection;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = ConnectionShadowConstants.ACTIVE_BLUR;
             ctx.strokeStyle = Theme.ui.activeConnection;
-            ctx.lineWidth = this.lineWidth + 1;
+            ctx.lineWidth = this.lineWidth + ConnectionConstants.ACTIVE_LINE_WIDTH_BONUS;
 
             // Animated dashes flowing downward
-            ctx.setLineDash([10, 6]);
+            ctx.setLineDash([ConnectionConstants.DASH_PATTERN_LONG, ConnectionConstants.DASH_PATTERN_SHORT]);
             ctx.lineDashOffset = -this.animationOffset; // Negative for downward flow
         }
         // Apply flash effect if active (and not actively executing)
         else if (isFlashing && flashIntensity > 0) {
             // Draw glow layer
             ctx.shadowColor = '#F1C40F';
-            ctx.shadowBlur = 20 * flashIntensity;
+            ctx.shadowBlur = ConnectionShadowConstants.FLASH_MAX_BLUR * flashIntensity;
             ctx.strokeStyle = `rgba(241, 196, 15, ${flashIntensity})`;
-            ctx.lineWidth = this.lineWidth + 4 * flashIntensity;
+            ctx.lineWidth = this.lineWidth + ConnectionShadowConstants.FLASH_MAX_WIDTH_BONUS * flashIntensity;
             ctx.setLineDash([]);
         }
         // Default connection style
@@ -163,7 +164,7 @@ export class ConnectionRenderer {
             ctx.shadowBlur = 0;
 
             if (isDashed) {
-                ctx.setLineDash([5, 5]);
+                ctx.setLineDash([ConnectionConstants.TEMPORARY_DASH_LONG, ConnectionConstants.TEMPORARY_DASH_SHORT]);
             } else {
                 ctx.setLineDash([]);
             }
@@ -189,5 +190,18 @@ export class ConnectionRenderer {
         to: Vector2
     ): void {
         this.drawConnection(ctx, from, to, true, true);
+    }
+
+    /**
+     * Check if there are any active animations requiring continuous rendering
+     */
+    public hasActiveAnimations(): boolean {
+        // Check for active flash animations
+        if (this.flashingConnections.size > 0) {
+            return true;
+        }
+        // Flow animations are always active if connections exist
+        // Return false here to skip rendering when idle
+        return false;
     }
 }
