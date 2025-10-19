@@ -168,18 +168,46 @@ export class MoveNodesAction implements Command {
     public description: string;
     private nodePositions: Map<TreeNode, { old: Vector2; new: Vector2 }> = new Map();
 
+    /**
+     * Constructor for recording a move that hasn't happened yet
+     * (calculates new positions from current position + delta)
+     */
+    constructor(nodes: TreeNode[], delta: Vector2);
+
+    /**
+     * Constructor for recording a move that already happened
+     * (uses explicit old/new positions from a map)
+     */
+    constructor(nodes: TreeNode[], deltaOrOldPositions: Vector2 | Map<TreeNode, Vector2>);
+
     constructor(
         nodes: TreeNode[],
-        delta: Vector2
+        deltaOrOldPositions: Vector2 | Map<TreeNode, Vector2>
     ) {
         this.description = `Move ${nodes.length} node(s)`;
 
-        nodes.forEach(node => {
-            this.nodePositions.set(node, {
-                old: node.position.clone(),
-                new: node.position.clone().add(delta)
+        if (deltaOrOldPositions instanceof Vector2) {
+            // Delta-based constructor (for future moves)
+            const delta = deltaOrOldPositions;
+            nodes.forEach(node => {
+                this.nodePositions.set(node, {
+                    old: node.position.clone(),
+                    new: node.position.clone().add(delta)
+                });
             });
-        });
+        } else {
+            // Map-based constructor (for recording completed moves)
+            const oldPositions = deltaOrOldPositions;
+            nodes.forEach(node => {
+                const oldPos = oldPositions.get(node);
+                if (oldPos) {
+                    this.nodePositions.set(node, {
+                        old: oldPos.clone(),
+                        new: node.position.clone()
+                    });
+                }
+            });
+        }
     }
 
     public execute(): void {

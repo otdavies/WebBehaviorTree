@@ -11,8 +11,22 @@ import { NodeRegistry } from '../core/NodeRegistry.js';
  *
  * **Architecture:**
  * - Mutable state is stored in public properties
- * - State changes should eventually go through Command pattern for undo/redo
- * - Direct mutation methods are maintained for backward compatibility during transition
+ * - State changes MUST go through Command pattern for undo/redo
+ * - Internal mutation methods are used by actions/commands only
+ *
+ * **Usage Pattern:**
+ * Good (use actions):
+ * ```typescript
+ * // UI code should dispatch actions
+ * const action = new AddNodeAction(state, node);
+ * state.commandHistory.execute(action);
+ * ```
+ *
+ * Bad (direct mutation):
+ * ```typescript
+ * // DON'T call internal methods from UI code
+ * state.addNode(node); // ❌ Wrong - bypasses undo/redo
+ * ```
  *
  * **Mutable State Properties:**
  * - `nodes`: All nodes in the editor (both connected and disconnected)
@@ -28,9 +42,8 @@ import { NodeRegistry } from '../core/NodeRegistry.js';
  *
  * **Method Categories:**
  * Methods are marked with JSDoc tags indicating their mutation behavior:
- * - `@mutation` - Directly mutates state (legacy methods, kept for backward compatibility)
+ * - `@internal` - Internal methods used by actions. Do not call from UI code.
  * - `@readonly` - Read-only queries that don't mutate state
- * - `@action` - Future action-based methods that will use Command pattern
  */
 export class EditorState {
     // ===========================
@@ -98,14 +111,13 @@ export class EditorState {
     }
 
     // ===========================
-    // NODE MANAGEMENT (MUTABLE)
+    // NODE MANAGEMENT (INTERNAL - USED BY ACTIONS)
     // ===========================
 
     /**
      * Adds a node to the editor
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * @mutation Adds node to nodes array and syncs with behavior tree
      * @param node - The node to add
@@ -119,8 +131,7 @@ export class EditorState {
     /**
      * Removes a node from the editor
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * This removes the node from:
      * - The nodes array
@@ -153,8 +164,7 @@ export class EditorState {
     /**
      * Removes multiple nodes from the editor
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * @mutation Removes all specified nodes and their connections
      * @param nodes - Array of nodes to remove
@@ -210,14 +220,13 @@ export class EditorState {
     }
 
     // ===========================
-    // CONNECTION MANAGEMENT (MUTABLE)
+    // CONNECTION MANAGEMENT (INTERNAL - USED BY ACTIONS)
     // ===========================
 
     /**
      * Creates a connection between a parent and child node
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * This method:
      * - Validates the connection (no cycles, no self-connections)
@@ -301,8 +310,7 @@ export class EditorState {
     /**
      * Disconnects a child from its parent
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * @mutation Removes parent-child relationship
      * @param node - The child node to disconnect
@@ -314,14 +322,13 @@ export class EditorState {
     }
 
     // ===========================
-    // STATE MANAGEMENT (MUTABLE)
+    // STATE MANAGEMENT (INTERNAL - USED BY ACTIONS)
     // ===========================
 
     /**
      * Clears all state including nodes, tree, and UI state
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * This resets:
      * - All nodes (array cleared)
@@ -340,14 +347,13 @@ export class EditorState {
     }
 
     // ===========================
-    // SERIALIZATION (MUTABLE)
+    // SERIALIZATION (INTERNAL - USED BY ACTIONS)
     // ===========================
 
     /**
      * Imports a tree from JSON data
      *
-     * **LEGACY METHOD:** Directly mutates state. Kept for backward compatibility.
-     * Future: Use action-based approach via Command pattern.
+     * **@internal** Used by actions internally. Do not call directly from UI code.
      *
      * This method:
      * - Deserializes ALL nodes from JSON (both connected and disconnected)

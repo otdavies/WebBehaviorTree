@@ -46,6 +46,20 @@ export class CommandHistory {
     }
 
     /**
+     * Records a command that has already been executed (for operations that
+     * mutate state before creating the command, like drag operations)
+     */
+    public recordCompleted(command: Command): void {
+        this.undoStack.push(command);
+        this.redoStack = []; // Clear redo stack when new command is recorded
+
+        // Limit stack size
+        if (this.undoStack.length > this.maxStackSize) {
+            this.undoStack.shift();
+        }
+    }
+
+    /**
      * Undoes the last command
      */
     public undo(): boolean {
