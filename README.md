@@ -2,6 +2,8 @@
 
 A browser-based behavior tree editor with Monaco integration, built with TypeScript, HTML, and CSS.
 
+https://otdavies.github.io/WebBehaviorTree/
+
 ## Features
 
 - Visual behavior tree editor with drag-and-drop interface
