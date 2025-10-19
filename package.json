@@ -1,0 +1,33 @@
+{
+  "name": "behavior-tree-editor",
+  "version": "1.0.0",
+  "description": "Browser-based behavior tree editor with Monaco integration",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "python -m http.server 8080",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "behavior-tree",
+    "visual-editor",
+    "node-editor",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@vitest/ui": "^3.2.4",
+    "jsdom": "^27.0.1",
+    "typescript": "^5.3.0",
+    "vitest": "^3.2.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.52.5"
+  }
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavior Tree Editor</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/canvas.css">
+    <link rel="stylesheet" href="styles/nodes.css">
+    <link rel="stylesheet" href="styles/panels.css">
+    <link rel="stylesheet" href="styles/toolbar.css">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Main Application Container -->
+    <div id="app">
+        <!-- Toolbar -->
+        <div id="toolbar">
+            <div class="toolbar-section">
+                <h1 class="app-title">
+                    <i class="fas fa-sitemap"></i>
+                    Behavior Tree Editor
+                </h1>
+            </div>
+
+            <div class="toolbar-section toolbar-controls">
+                <button id="btn-play" class="toolbar-btn" title="Play (Space)">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button id="btn-pause" class="toolbar-btn" title="Pause">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button id="btn-step" class="toolbar-btn" title="Step (S)">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+                <button id="btn-reset" class="toolbar-btn" title="Reset (R)">
+                    <i class="fas fa-undo"></i>
+                </button>
+
+                <div class="toolbar-separator"></div>
+
+                <label class="tick-rate-label">
+                    Tick Rate:
+                    <input type="range" id="tick-rate-slider" min="1" max="60" value="10">
+                    <span id="tick-rate-value">10</span> ticks/s
+                </label>
+            </div>
+
+            <div class="toolbar-section">
+                <button id="btn-settings" class="toolbar-btn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="main-content">
+            <!-- Inspector Panel (Left Side) -->
+            <div id="inspector-panel" class="panel panel-left">
+                <div class="inspector-empty">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Select a node to inspect</p>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div id="canvas-container">
+                <canvas id="editor-canvas"></canvas>
+            </div>
+
+            <!-- Settings Panel (Initially Hidden) -->
+            <div id="settings-panel" class="panel panel-right hidden">
+                <div class="panel-header">
+                    <h2>Settings</h2>
+                    <button id="btn-close-settings" class="btn-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="panel-content">
+                    <section class="settings-section">
+                        <h3>File</h3>
+                        <button id="btn-export" class="settings-btn">
+                            <i class="fas fa-download"></i> Export JSON
+                        </button>
+                        <button id="btn-import" class="settings-btn">
+                            <i class="fas fa-upload"></i> Import JSON
+                        </button>
+                        <input type="file" id="file-input" accept=".json" style="display: none;">
+                        <button id="btn-clear" class="settings-btn settings-btn-danger">
+                            <i class="fas fa-trash"></i> Clear Tree
+                        </button>
+                    </section>
+
+                    <section class="settings-section">
+                        <h3>Execution</h3>
+                        <label class="settings-label">
+                            Tick Rate: <span id="settings-tick-rate-value">10</span> ticks/s
+                            <input type="range" id="settings-tick-rate" min="1" max="60" value="10" style="width: 100%; margin-top: 8px;">
+                        </label>
+                    </section>
+
+                    <section class="settings-section">
+                        <h3>Visual</h3>
+                        <label class="settings-checkbox">
+                            <input type="checkbox" id="show-grid" checked>
+                            Show Grid
+                        </label>
+                        <!-- Snap to grid disabled for now - it's broken
+                        <label class="settings-checkbox">
+                            <input type="checkbox" id="snap-to-grid">
+                            Snap to Grid
+                        </label>
+                        -->
+                    </section>
+
+                    <section class="settings-section">
+                        <h3>Blackboard</h3>
+                        <div id="blackboard-inspector" class="blackboard-inspector">
+                            <em>No data</em>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Code Editor Panel (Initially Hidden) -->
+            <div id="code-editor-panel" class="panel panel-right hidden">
+                <div class="panel-header">
+                    <h2>
+                        <i class="fas fa-code"></i>
+                        Edit Node Code
+                    </h2>
+                    <div class="panel-header-actions">
+                        <!-- Buttons added dynamically by CodeEditorPanel.ts -->
+                    </div>
+                    <button id="btn-close-editor" class="btn-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="panel-content">
+                    <div class="editor-info">
+                        <strong>Node:</strong> <span id="editor-node-label">-</span>
+                    </div>
+
+                    <div id="monaco-editor-container" style="height: 100%; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu is dynamically generated by ContextMenu.ts -->
+    </div>
+
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <script>
+        // Configure Monaco loader
+        require.config({
+            paths: {
+                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'
+            }
+        });
+
+        // Load Monaco and then our application
+        require(['vs/editor/editor.main'], function() {
+            console.log('Monaco Editor loaded successfully');
+            window.monacoLoaded = true;
+
+            // Dispatch event that Monaco is ready
+            window.dispatchEvent(new Event('monaco-loaded'));
+        });
+    </script>
+
+    <!-- Main Application Script (ES Module) -->
+    <script type="module" src="dist/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* ========================================
+   Canvas Container
+   ======================================== */
+
+#canvas-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bg-primary);
+}
+
+#editor-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: default;
+}
+
+/* Canvas States */
+#editor-canvas.panning {
+    cursor: grabbing;
+}
+
+#editor-canvas.connecting {
+    cursor: crosshair;
+}
+
+#editor-canvas.selecting {
+    cursor: crosshair;
+}
+
+/* ========================================
+   Selection Box
+   ======================================== */
+
+.selection-box {
+    position: absolute;
+    border: 2px dashed var(--selection-color);
+    background-color: var(--selection-bg);
+    pointer-events: none;
+    z-index: 1000;
+}

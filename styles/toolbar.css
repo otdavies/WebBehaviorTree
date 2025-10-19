@@ -1,0 +1,138 @@
+/* ========================================
+   Toolbar
+   ======================================== */
+
+#toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    padding: var(--spacing-sm) var(--spacing-md);
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.toolbar-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.toolbar-controls {
+    flex: 1;
+    justify-content: center;
+}
+
+/* ========================================
+   App Title
+   ======================================== */
+
+.app-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.app-title i {
+    color: var(--btn-primary);
+    font-size: 20px;
+}
+
+/* ========================================
+   Toolbar Buttons
+   ======================================== */
+
+.toolbar-btn {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+    background-color: var(--bg-primary);
+    border-color: var(--border-color-light);
+    color: var(--btn-primary);
+}
+
+.toolbar-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.toolbar-btn.active {
+    background-color: var(--btn-primary);
+    border-color: var(--btn-primary);
+    color: white;
+}
+
+/* Play button special styling */
+#btn-play:not(:disabled):hover {
+    color: var(--status-success);
+}
+
+#btn-play.active {
+    background-color: var(--status-success);
+    border-color: var(--status-success);
+}
+
+/* Pause button special styling */
+#btn-pause:not(:disabled):hover {
+    color: var(--status-running);
+}
+
+#btn-pause.active {
+    background-color: var(--status-running);
+    border-color: var(--status-running);
+}
+
+/* Reset button special styling */
+#btn-reset:not(:disabled):hover {
+    color: var(--btn-danger);
+}
+
+/* ========================================
+   Toolbar Separator
+   ======================================== */
+
+.toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background-color: var(--border-color);
+    margin: 0 var(--spacing-sm);
+}
+
+/* ========================================
+   Tick Rate Control
+   ======================================== */
+
+.tick-rate-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#tick-rate-slider {
+    width: 100px;
+}
+
+#tick-rate-value {
+    display: inline-block;
+    min-width: 20px;
+    text-align: right;
+    color: var(--text-primary);
+    font-weight: 600;
+}

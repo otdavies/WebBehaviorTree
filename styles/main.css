@@ -1,0 +1,262 @@
+/* ========================================
+   Global Styles & Reset
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Color Palette */
+    --bg-primary: #1E1E1E;
+    --bg-secondary: #2D2D2D;
+    --bg-tertiary: #252525;
+
+    --text-primary: #E0E0E0;
+    --text-secondary: #A0A0A0;
+    --text-muted: #707070;
+
+    --border-color: #3A3A3A;
+    --border-color-light: #4A4A4A;
+
+    /* Node Colors */
+    --node-composite: #4A90E2;
+    --node-decorator: #9B59B6;
+    --node-leaf: #2ECC71;
+
+    /* Connection Colors */
+    --connection-default: #7F8C8D;
+    --connection-active: #3498DB;
+
+    /* Status Colors */
+    --status-success: #27AE60;
+    --status-failure: #E74C3C;
+    --status-running: #F1C40F;
+    --status-idle: #95A5A6;
+
+    /* Selection */
+    --selection-color: #F39C12;
+    --selection-bg: rgba(243, 156, 18, 0.2);
+
+    /* UI Elements */
+    --btn-primary: #3498DB;
+    --btn-primary-hover: #2980B9;
+    --btn-danger: #E74C3C;
+    --btn-danger-hover: #C0392B;
+
+    /* Grid */
+    --grid-color: #2D2D2D;
+    --grid-dot-color: #404040;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   Application Layout
+   ======================================== */
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+#main-content {
+    display: flex;
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ========================================
+   Utilities
+   ======================================== */
+
+.hidden {
+    display: none !important;
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color-light);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5A5A5A;
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+button {
+    font-family: var(--font-family);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: var(--btn-primary);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--btn-primary-hover);
+}
+
+.btn-secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-color-light);
+}
+
+.btn-close {
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 18px;
+    padding: var(--spacing-xs);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.btn-close:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   Inputs
+   ======================================== */
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    height: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: var(--btn-primary);
+    border-radius: 50%;
+    height: 16px;
+    width: 16px;
+    margin-top: -5px;
+}
+
+input[type="range"]::-moz-range-track {
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    height: 6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+    background-color: var(--btn-primary);
+    border: none;
+    border-radius: 50%;
+    height: 16px;
+    width: 16px;
+}
+
+input[type="checkbox"] {
+    cursor: pointer;
+    margin-right: var(--spacing-sm);
+}
+
+/* ========================================
+   Toast Notifications
+   ======================================== */
+
+.toast-container {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.toast {
+    background-color: rgba(52, 152, 219, 0.95);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}

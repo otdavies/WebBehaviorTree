@@ -1,0 +1,55 @@
+/* ========================================
+   Node Visual Styles (Reference for Canvas Rendering)
+
+   These are not applied directly to HTML elements,
+   but serve as documentation for the canvas rendering
+   style guide.
+   ======================================== */
+
+/*
+  Node Appearance:
+  ┌─────────────────┐
+  │   ╔═══╗         │  ← Input port (circle)
+  │   ║ ⚙ ║ Label   │  ← Icon + Label
+  │   ╚═══╝         │
+  │                 │
+  │   ○  ○  ○       │  ← Output ports (circles)
+  └─────────────────┘
+
+  Dimensions:
+  - Node width: 180px
+  - Node height: 80px (auto-adjusts for children)
+  - Border radius: 8px
+  - Port radius: 6px
+  - Icon size: 24px
+
+  Colors:
+  - Composite nodes: #4A90E2
+  - Decorator nodes: #9B59B6
+  - Leaf nodes: #2ECC71
+
+  Status indicator (top-right corner):
+  - Success: #27AE60
+  - Failure: #E74C3C
+  - Running: #F1C40F
+  - Idle: #95A5A6
+*/
+
+/* These variables are used in the canvas rendering code */
+:root {
+    --node-width: 180px;
+    --node-height: 80px;
+    --node-border-radius: 8px;
+    --node-padding: 12px;
+
+    --port-radius: 6px;
+    --port-hover-radius: 8px;
+
+    --icon-size: 24px;
+
+    --node-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --node-shadow-selected: 0 0 0 3px var(--selection-color);
+
+    --connection-width: 2px;
+    --connection-width-selected: 3px;
+}

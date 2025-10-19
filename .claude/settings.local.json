@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(npm test)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx tsc)",
+      "Bash(npm test -- tests/state/EditorState.test.ts)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

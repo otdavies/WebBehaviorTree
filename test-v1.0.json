@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "created": "2025-10-19T07:06:33.812Z",
+    "tickCount": 0
+  },
+  "tree": {
+    "nodes": [
+      {
+        "id": "node-1",
+        "type": "sequence",
+        "label": "Test Sequence",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "children": []
+      }
+    ],
+    "root": "node-1"
+  },
+  "blackboard": {
+    "initialValues": {}
+  }
+}
