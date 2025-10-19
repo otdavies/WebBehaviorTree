@@ -1,5 +1,7 @@
 import { TreeNode } from '../core/TreeNode.js';
 import { EditorState } from '../state/EditorState.js';
+import { UpdateNodeCodeAction } from '../actions/EditorActions.js';
+import { CommandHistory } from '../core/Command.js';
 
 declare const monaco: any;
 
@@ -8,6 +10,7 @@ declare const monaco: any;
  */
 export class CodeEditorPanel {
     private editorState: EditorState;
+    private commandHistory: CommandHistory;
     private panel: HTMLElement;
     private btnClose: HTMLButtonElement;
     private btnSave: HTMLButtonElement;
@@ -26,8 +29,9 @@ export class CodeEditorPanel {
     private startX: number = 0;
     private startWidth: number = 0;
 
-    constructor(editorState: EditorState) {
+    constructor(editorState: EditorState, commandHistory: CommandHistory) {
         this.editorState = editorState;
+        this.commandHistory = commandHistory;
 
         // Get DOM elements
         this.panel = document.getElementById('code-editor-panel')!;
@@ -245,7 +249,9 @@ export class CodeEditorPanel {
      */
     private saveCodeAndFile(): void {
         if (this.currentNode && this.monacoEditor) {
-            this.currentNode.code = this.monacoEditor.getValue();
+            const newCode = this.monacoEditor.getValue();
+            const action = new UpdateNodeCodeAction(this.currentNode, newCode);
+            this.commandHistory.execute(action);
 
             // Trigger file save callback if provided
             if (this.onSaveToFile) {
