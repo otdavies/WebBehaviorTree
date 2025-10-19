@@ -21,6 +21,9 @@ import { Toast } from './ui/Toast.js';
 import { CustomNodeCatalog } from './utils/CustomNodeCatalog.js';
 import { CustomActionNode } from './nodes/leaves/CustomActionNode.js';
 import { AddNodeOperation, ClearAllNodesOperation, ImportTreeOperation, ConnectNodesOperation, UpdateNodeCodeOperation, BatchOperation } from './actions/EditorActions.js';
+import { ChatPanel } from './ui/ChatPanel.js';
+import { ModelInterface } from './ai/ModelInterface.js';
+import { TreeSerializer } from './utils/TreeSerializer.js';
 
 // Initialize custom node catalog
 CustomNodeCatalog.initialize();
@@ -72,6 +75,8 @@ let settingsPanel: SettingsPanel;
 let codeEditorPanel: CodeEditorPanel;
 let contextMenu: ContextMenu;
 let inspectorPanel: InspectorPanel;
+let chatPanel: ChatPanel;
+let modelInterface: ModelInterface;
 
 /**
  * Creates a node by type using the NodeRegistry
@@ -281,6 +286,42 @@ function initializeApp(): void {
     codeEditorPanel = new CodeEditorPanel(editorState, editorState.operationHistory, NodeExecutor, CustomNodeCatalog);
     contextMenu = new ContextMenu();
     inspectorPanel = new InspectorPanel(editorState.operationHistory);
+
+    // Initialize AI chat components
+    chatPanel = new ChatPanel();
+    modelInterface = new ModelInterface(
+        editorState,
+        canvas.viewport,
+        canvas.selectionManager,
+        editorState.operationHistory
+    );
+
+    // Expose modelInterface globally for debugging
+    (window as any).modelInterface = modelInterface;
+
+    // Wire up chat panel message handler
+    // NOTE: This is a placeholder for Step 2 (AI API integration)
+    chatPanel.onSendMessage = (message: string) => {
+        // For now, just log the message and show the tree state
+        console.log('User message:', message);
+
+        // Get current tree state for AI
+        const treeState = TreeSerializer.serializeForAI(
+            editorState,
+            canvas.viewport,
+            canvas.selectionManager
+        );
+
+        // Log the serialized state (for development/debugging)
+        console.log('Tree state:', treeState);
+        console.log('Tree summary:', TreeSerializer.createTextSummary(treeState));
+
+        // Show system message with tree summary for now
+        chatPanel.addSystemMessage(
+            `Tree state captured: ${treeState.metadata.totalNodes} nodes, ${treeState.connections.length} connections.\n\n` +
+            `AI integration coming in Step 2!`
+        );
+    };
 
     // Wire up code editor panel save callback (for Ctrl+S)
     codeEditorPanel.onSaveToFile = saveTree;
