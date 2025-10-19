@@ -20,11 +20,7 @@ import { registerDefaultNodes } from './core/DefaultNodes.js';
 import { Toast } from './ui/Toast.js';
 import { CustomNodeCatalog } from './utils/CustomNodeCatalog.js';
 import { CustomActionNode } from './nodes/leaves/CustomActionNode.js';
-import { AddNodeOperation, ClearAllNodesOperation, ImportTreeOperation } from './actions/EditorActions.js';
-
-// Make NodeExecutor and CustomNodeCatalog available globally for CodeEditorPanel
-(window as any).NodeExecutor = NodeExecutor;
-(window as any).CustomNodeCatalog = CustomNodeCatalog;
+import { AddNodeOperation, ClearAllNodesOperation, ImportTreeOperation, ConnectNodesOperation, UpdateNodeCodeOperation, BatchOperation } from './actions/EditorActions.js';
 
 // Initialize custom node catalog
 CustomNodeCatalog.initialize();
@@ -34,8 +30,6 @@ registerDefaultNodes();
 
 // Register custom nodes from catalog
 registerCustomNodesFromCatalog();
-
-console.log('Behavior Tree Editor starting...');
 
 /**
  * Registers all custom nodes from the catalog with the NodeRegistry
@@ -65,10 +59,6 @@ function registerCustomNodesFromCatalog(): void {
             },
             tags: customNode.tags || ['custom', customNode.label.toLowerCase()]
         });
-    }
-
-    if (customNodes.length > 0) {
-        console.log(`Registered ${customNodes.length} custom node(s) from catalog`);
     }
 }
 
@@ -135,7 +125,6 @@ function exportTree(): void {
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
     FileIO.downloadJSON(data, `behavior-tree-${timestamp}.json`);
-    console.log('Tree exported successfully');
 }
 
 /**
@@ -186,16 +175,16 @@ function importTree(data: any): void {
 
             // Re-register custom nodes with NodeRegistry
             registerCustomNodesFromCatalog();
-
-            console.log(`Imported ${data.customNodes.length} custom node definition(s)`);
         }
 
         // Use ImportTreeOperation for undo/redo support
         const operation = new ImportTreeOperation(editorState, data);
         editorState.operationHistory.execute(operation);
 
+        // Rebuild port cache after importing
+        canvas.rebuildPortCache();
+
         Toast.show('Tree loaded successfully', 2000);
-        console.log('Tree imported successfully');
     } catch (error) {
         console.error('Failed to import tree:', error);
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -215,7 +204,6 @@ function loadTreeFromStorage(): boolean {
             // Use operation directly for consistency, but don't add to history
             const operation = new ImportTreeOperation(editorState, data);
             operation.execute();
-            console.log('Tree loaded from localStorage');
             return true;
         }
         return false;
@@ -233,15 +221,14 @@ function loadTreeFromStorage(): boolean {
 function clearTree(): void {
     const operation = new ClearAllNodesOperation(editorState);
     editorState.operationHistory.execute(operation);
-    console.log('Tree cleared');
+    // Rebuild port cache after clearing
+    canvas.rebuildPortCache();
 }
 
 /**
  * Initializes the application
  */
 function initializeApp(): void {
-    console.log('Initializing application...');
-
     // Get canvas element
     const canvasElement = document.getElementById('editor-canvas') as HTMLCanvasElement;
     if (!canvasElement) {
@@ -291,7 +278,7 @@ function initializeApp(): void {
     toolbar = new Toolbar(editorState.behaviorTree);
     statusBar = new StatusBar(editorState.behaviorTree, editorState);
     settingsPanel = new SettingsPanel(editorState, editorState.operationHistory);
-    codeEditorPanel = new CodeEditorPanel(editorState, editorState.operationHistory);
+    codeEditorPanel = new CodeEditorPanel(editorState, editorState.operationHistory, NodeExecutor, CustomNodeCatalog);
     contextMenu = new ContextMenu();
     inspectorPanel = new InspectorPanel(editorState.operationHistory);
 
@@ -322,14 +309,11 @@ function initializeApp(): void {
             },
             tags: customNodeDef.tags || ['custom', customNodeDef.label.toLowerCase()]
         });
-        console.log(`Registered custom node "${customNodeDef.label}" immediately`);
     };
 
     // Wire up library definition updated callback
     codeEditorPanel.onLibraryDefinitionUpdated = (libraryType: string, updatedDef: any) => {
-        console.log(`Library definition updated: ${libraryType} (v${updatedDef.version})`);
-
-        let syncedCount = 0;
+        const operations: UpdateNodeCodeOperation[] = [];
 
         // Find all nodes in the tree that match this library type
         for (const node of editorState.nodes) {
@@ -338,16 +322,23 @@ function initializeApp(): void {
 
             // Skip if node is modified (user has customized it)
             if (node.isModified) {
-                console.log(`  Skipping modified node: ${node.label} (${node.id})`);
                 continue;
             }
 
-            // Update the node's code and version
-            node.code = updatedDef.code;
-            node.libraryVersion = updatedDef.version;
-            syncedCount++;
+            // Create operation to update node code
+            operations.push(new UpdateNodeCodeOperation(node, updatedDef.code));
 
-            console.log(`  Synced node: ${node.label} (${node.id}) to v${updatedDef.version}`);
+            // Update library version metadata (tracking info, not operational state)
+            node.libraryVersion = updatedDef.version;
+        }
+
+        // Execute all code updates as a single undoable batch operation
+        if (operations.length > 0) {
+            const batchOp = new BatchOperation(
+                operations,
+                `Sync ${operations.length} node(s) to library ${updatedDef.label} v${updatedDef.version}`
+            );
+            editorState.operationHistory.execute(batchOp);
         }
 
         // Re-register the factory with updated code
@@ -373,8 +364,6 @@ function initializeApp(): void {
             tags: updatedDef.tags || ['custom', updatedDef.label.toLowerCase()]
         });
 
-        console.log(`Synced ${syncedCount} node(s) to library v${updatedDef.version}`);
-
         // Save the tree after syncing
         saveTree();
     };
@@ -393,6 +382,8 @@ function initializeApp(): void {
     contextMenu.onNodeTypeSelect = (type: string, worldPos: Vector2) => {
         createNode(type, worldPos);
         statusBar.update(); // Update status bar when node is added
+        // Rebuild port cache when node is added
+        canvas.rebuildPortCache();
     };
 
     // Wire up inspector panel
@@ -454,7 +445,8 @@ function initializeApp(): void {
         createDemoTree();
     }
 
-    console.log('Application initialized successfully!');
+    // Build initial port cache after tree is loaded
+    canvas.rebuildPortCache();
 }
 
 /**
@@ -482,20 +474,18 @@ const counter = blackboard.get('counter') || 0;
 console.log('Counter value:', counter);
 return NodeStatus.SUCCESS;`;
 
-    // Connect nodes
-    editorState.connectNodes(root, action1);
-    editorState.connectNodes(root, action2);
+    // Connect nodes using operations (but don't add to history for demo tree)
+    const op1 = new ConnectNodesOperation(editorState, root, action1);
+    const op2 = new ConnectNodesOperation(editorState, root, action2);
+    editorState.operationHistory.recordCompleted(op1);
+    editorState.operationHistory.recordCompleted(op2);
 
     // Set as root
     editorState.behaviorTree.setRoot(root);
-
-    console.log('Demo tree created');
 }
 
 // Wait for DOM and Monaco to be ready
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, waiting for Monaco...');
-
     const initApp = () => {
         try {
             initializeApp();
