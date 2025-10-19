@@ -211,11 +211,10 @@ export class InteractionManager {
 
                     // Only create command if there was actual movement
                     if (delta.length() > 0.1) {
-                        const action = new MoveNodesAction(selectedNodes, delta);
-                        // The movement already happened, so we just need to add to history
-                        // without executing again
-                        this.editorState.commandHistory['undoStack'].push(action);
-                        this.editorState.commandHistory['redoStack'] = [];
+                        // Create action with the captured old positions (movement already happened)
+                        const action = new MoveNodesAction(selectedNodes, this.draggedNodes);
+                        // Record as completed since the movement already happened during drag
+                        this.editorState.commandHistory.recordCompleted(action);
 
                         // Re-sort children of affected parents to maintain left-to-right order
                         const affectedParents = new Set<TreeNode>();
