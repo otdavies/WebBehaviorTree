@@ -4,7 +4,9 @@ import { NodeRenderer } from './NodeRenderer.js';
 import { ConnectionRenderer } from './ConnectionRenderer.js';
 import { SelectionManager } from './SelectionManager.js';
 import { FloatingMessageManager } from './FloatingMessage.js';
+import { PortCache } from './PortCache.js';
 import { EditorState } from '../state/EditorState.js';
+import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
 import { Theme } from '../utils/Theme.js';
 
@@ -21,6 +23,7 @@ export class Canvas {
     public connectionRenderer: ConnectionRenderer;
     public selectionManager: SelectionManager;
     public floatingMessages: FloatingMessageManager;
+    public portCache: PortCache;
 
     private editorState: EditorState;
     private animationFrameId: number | null = null;
@@ -45,6 +48,7 @@ export class Canvas {
         this.connectionRenderer = new ConnectionRenderer();
         this.selectionManager = new SelectionManager();
         this.floatingMessages = new FloatingMessageManager();
+        this.portCache = new PortCache(this.nodeRenderer);
 
         // Setup canvas
         this.resizeCanvas();
@@ -101,9 +105,55 @@ export class Canvas {
         // Update animations
         this.connectionRenderer.updateAnimation(deltaTime);
 
+        // Render every frame
         this.render();
+
         this.animationFrameId = requestAnimationFrame(this.renderLoop);
     };
+
+    /**
+     * Marks the canvas as dirty to trigger a re-render on the next frame
+     * NOTE: Currently renders every frame, so this is a no-op for future optimization
+     */
+    public markDirty(): void {
+        // No-op: rendering every frame for now
+    }
+
+    /**
+     * Rebuilds the port cache for spatial indexing
+     * Call this when nodes are added, removed, moved, or zoom changes
+     */
+    public rebuildPortCache(): void {
+        this.portCache.rebuild(this.editorState.nodes, this.viewport.zoom);
+    }
+
+    /**
+     * Invalidates the port cache
+     * Call this to force a rebuild on next access
+     */
+    public invalidatePortCache(): void {
+        this.portCache.invalidate();
+    }
+
+    /**
+     * Checks if a node is visible within the current viewport bounds
+     */
+    private isNodeVisible(node: TreeNode, bounds: { min: Vector2; max: Vector2 }): boolean {
+        const nodeWidth = NodeRenderer.getNodeWidth(node);
+        const nodeHeight = NodeRenderer.NODE_HEIGHT;
+
+        // Node bounds in world space
+        const nodeLeft = node.position.x - nodeWidth / 2;
+        const nodeRight = node.position.x + nodeWidth / 2;
+        const nodeTop = node.position.y - nodeHeight / 2;
+        const nodeBottom = node.position.y + nodeHeight / 2;
+
+        // Check if node overlaps with visible bounds
+        return !(nodeRight < bounds.min.x ||
+                 nodeLeft > bounds.max.x ||
+                 nodeBottom < bounds.min.y ||
+                 nodeTop > bounds.max.y);
+    }
 
     /**
      * Renders a single frame
@@ -153,8 +203,14 @@ export class Canvas {
             this.connectionRenderer.drawTemporaryConnection(ctx, fromPos, temp.toPos);
         }
 
-        // Render nodes
+        // Render nodes (with viewport culling for performance)
+        const visibleBounds = this.viewport.getVisibleBounds();
         this.editorState.nodes.forEach(node => {
+            // Skip rendering if node is outside visible bounds
+            if (!this.isNodeVisible(node, visibleBounds)) {
+                return;
+            }
+
             const isSelected = this.selectionManager.isSelected(node);
             const isHovered = this.selectionManager.isHovered(node);
 
