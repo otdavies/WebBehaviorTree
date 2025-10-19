@@ -2,6 +2,8 @@ import { TreeNode } from '../core/TreeNode.js';
 import { EditorState } from '../state/EditorState.js';
 import { UpdateNodeCodeOperation } from '../actions/EditorActions.js';
 import { OperationHistory } from '../core/Operation.js';
+import { NodeExecutor } from '../core/NodeExecutor.js';
+import { CustomNodeCatalog } from '../utils/CustomNodeCatalog.js';
 
 declare const monaco: any;
 
@@ -11,6 +13,8 @@ declare const monaco: any;
 export class CodeEditorPanel {
     private editorState: EditorState;
     private commandHistory: OperationHistory;
+    private nodeExecutor: typeof NodeExecutor;
+    private customNodeCatalog: typeof CustomNodeCatalog;
     private panel: HTMLElement;
     private btnClose: HTMLButtonElement;
     private btnSave: HTMLButtonElement;
@@ -33,10 +37,19 @@ export class CodeEditorPanel {
     private isResizing: boolean = false;
     private startX: number = 0;
     private startWidth: number = 0;
+    private resizeMoveHandler: ((e: MouseEvent) => void) | null = null;
+    private resizeUpHandler: (() => void) | null = null;
 
-    constructor(editorState: EditorState, commandHistory: OperationHistory) {
+    constructor(
+        editorState: EditorState,
+        commandHistory: OperationHistory,
+        nodeExecutor: typeof NodeExecutor,
+        customNodeCatalog: typeof CustomNodeCatalog
+    ) {
         this.editorState = editorState;
         this.commandHistory = commandHistory;
+        this.nodeExecutor = nodeExecutor;
+        this.customNodeCatalog = customNodeCatalog;
 
         // Get DOM elements
         this.panel = document.getElementById('code-editor-panel')!;
@@ -87,18 +100,31 @@ export class CodeEditorPanel {
             this.startX = e.clientX;
             this.startWidth = this.panel.offsetWidth;
             e.preventDefault();
-        });
 
-        document.addEventListener('mousemove', (e) => {
-            if (!this.isResizing) return;
+            // Create and attach resize handlers
+            this.resizeMoveHandler = (e: MouseEvent) => {
+                if (!this.isResizing) return;
 
-            const deltaX = this.startX - e.clientX;
-            const newWidth = Math.max(400, Math.min(1200, this.startWidth + deltaX));
-            this.panel.style.width = `${newWidth}px`;
-        });
+                const deltaX = this.startX - e.clientX;
+                const newWidth = Math.max(400, Math.min(1200, this.startWidth + deltaX));
+                this.panel.style.width = `${newWidth}px`;
+            };
 
-        document.addEventListener('mouseup', () => {
-            this.isResizing = false;
+            this.resizeUpHandler = () => {
+                this.isResizing = false;
+                // Remove listeners after resize completes
+                if (this.resizeMoveHandler) {
+                    document.removeEventListener('mousemove', this.resizeMoveHandler);
+                    this.resizeMoveHandler = null;
+                }
+                if (this.resizeUpHandler) {
+                    document.removeEventListener('mouseup', this.resizeUpHandler);
+                    this.resizeUpHandler = null;
+                }
+            };
+
+            document.addEventListener('mousemove', this.resizeMoveHandler);
+            document.addEventListener('mouseup', this.resizeUpHandler);
         });
     }
 
@@ -164,13 +190,10 @@ export class CodeEditorPanel {
         let isOutOfSync = false;
         let libraryDef: any = null;
 
-        if (isLibraryNode) {
-            const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-            if (CustomNodeCatalog) {
-                libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
-                if (libraryDef) {
-                    isOutOfSync = this.currentNode.libraryVersion !== libraryDef.version;
-                }
+        if (isLibraryNode && this.currentNode.libraryType) {
+            libraryDef = this.customNodeCatalog.getCustomNode(this.currentNode.libraryType);
+            if (libraryDef) {
+                isOutOfSync = this.currentNode.libraryVersion !== libraryDef.version;
             }
         }
 
@@ -299,19 +322,15 @@ export class CodeEditorPanel {
     private getDefaultCodeForNode(node: TreeNode): string {
         // Check if this is a custom node (type starts with "custom_")
         if (node.type.startsWith('custom_')) {
-            const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-            if (CustomNodeCatalog) {
-                const customNode = CustomNodeCatalog.getCustomNode(node.type);
-                if (customNode && customNode.code) {
-                    return customNode.code;
-                }
+            const customNode = this.customNodeCatalog.getCustomNode(node.type);
+            if (customNode && customNode.code) {
+                return customNode.code;
             }
         }
 
         // Fall back to base action template
-        const NodeExecutor = (window as any).NodeExecutor;
-        if (NodeExecutor && typeof NodeExecutor.getDefaultCode === 'function') {
-            return NodeExecutor.getDefaultCode();
+        if (typeof this.nodeExecutor.getDefaultCode === 'function') {
+            return this.nodeExecutor.getDefaultCode();
         }
         return '';
     }
@@ -351,8 +370,7 @@ export class CodeEditorPanel {
 
             // Mark node as modified ONLY if code differs from library definition
             if (this.currentNode.libraryType) {
-                const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-                const libraryDef = CustomNodeCatalog?.getCustomNode(this.currentNode.libraryType);
+                const libraryDef = this.customNodeCatalog.getCustomNode(this.currentNode.libraryType);
 
                 if (libraryDef) {
                     // Compare trimmed code to avoid whitespace-only differences
@@ -395,13 +413,6 @@ export class CodeEditorPanel {
 
         const nodeDescription = prompt('Enter a description (optional):', '') || '';
 
-        // Import CustomNodeCatalog
-        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-        if (!CustomNodeCatalog) {
-            alert('Custom node catalog not available');
-            return;
-        }
-
         const code = this.monacoEditor.getValue();
 
         try {
@@ -417,7 +428,7 @@ export class CodeEditorPanel {
                 updatedAt: new Date().toISOString()
             };
 
-            CustomNodeCatalog.saveCustomNode(customNodeDef);
+            this.customNodeCatalog.saveCustomNode(customNodeDef);
 
             // Trigger callback to register the custom node immediately
             if (this.onCustomNodeSaved) {
@@ -461,14 +472,8 @@ export class CodeEditorPanel {
             return;
         }
 
-        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-        if (!CustomNodeCatalog) {
-            alert('Custom node catalog not available');
-            return;
-        }
-
         // Get the current library definition
-        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        const libraryDef = this.customNodeCatalog.getCustomNode(this.currentNode.libraryType);
         if (!libraryDef) {
             alert(`Library definition for "${this.currentNode.libraryType}" not found.`);
             return;
@@ -484,7 +489,7 @@ export class CodeEditorPanel {
 
         try {
             // Update the library definition
-            const updated = CustomNodeCatalog.updateCustomNode(this.currentNode.libraryType, {
+            const updated = this.customNodeCatalog.updateCustomNode(this.currentNode.libraryType, {
                 code: newCode,
                 label: libraryDef.label,
                 description: libraryDef.description,
@@ -542,13 +547,7 @@ export class CodeEditorPanel {
             return;
         }
 
-        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-        if (!CustomNodeCatalog) {
-            alert('Custom node catalog not available');
-            return;
-        }
-
-        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        const libraryDef = this.customNodeCatalog.getCustomNode(this.currentNode.libraryType);
         if (!libraryDef) {
             alert(`Library definition for "${this.currentNode.libraryType}" not found.`);
             return;
@@ -586,8 +585,6 @@ export class CodeEditorPanel {
             this.btnResyncWithLibrary.innerHTML = originalIcon;
             this.btnResyncWithLibrary.style.color = '';
         }, 2000);
-
-        console.log(`Node resynced with library v${libraryDef.version}`);
     }
 
     /**
@@ -601,13 +598,7 @@ export class CodeEditorPanel {
             return;
         }
 
-        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-        if (!CustomNodeCatalog) {
-            alert('Custom node catalog not available');
-            return;
-        }
-
-        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        const libraryDef = this.customNodeCatalog.getCustomNode(this.currentNode.libraryType);
         if (!libraryDef) {
             alert(`Library definition for "${this.currentNode.libraryType}" not found.`);
             return;
@@ -654,8 +645,6 @@ export class CodeEditorPanel {
             this.btnUpdateToLatest.innerHTML = originalIcon;
             this.btnUpdateToLatest.style.color = '';
         }, 2000);
-
-        console.log(`Node updated to library v${libraryDef.version}`);
     }
 
     /**
@@ -670,13 +659,7 @@ export class CodeEditorPanel {
             return;
         }
 
-        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-        if (!CustomNodeCatalog) {
-            this.syncStatusIndicator.classList.add('hidden');
-            return;
-        }
-
-        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        const libraryDef = this.customNodeCatalog.getCustomNode(this.currentNode.libraryType);
         if (!libraryDef) {
             // Library definition doesn't exist (maybe deleted)
             this.syncStatusIndicator.className = 'sync-status-indicator out-of-sync';
@@ -721,26 +704,23 @@ export class CodeEditorPanel {
 
         const nodeDescription = prompt('Enter a description (optional):', '') || '';
 
-        // Import CustomNodeCatalog
-        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
-        if (!CustomNodeCatalog) {
-            alert('Custom node catalog not available');
-            return;
-        }
-
         const code = this.monacoEditor.getValue();
 
         try {
-            const customNodeDef = {
+            const customNodeDef: any = {
                 type: `custom_${nodeName.toLowerCase().replace(/\s+/g, '_')}`,
                 label: nodeName,
                 description: nodeDescription,
                 code: code,
                 icon: this.currentNode.icon,
-                category: 'leaf' as 'leaf'
+                category: 'leaf' as 'leaf',
+                // saveCustomNode will auto-fill version, createdAt, updatedAt
+                version: 1,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             };
 
-            CustomNodeCatalog.saveCustomNode(customNodeDef);
+            this.customNodeCatalog.saveCustomNode(customNodeDef);
 
             // Trigger callback to register the custom node immediately
             if (this.onCustomNodeSaved) {

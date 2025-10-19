@@ -9,6 +9,7 @@ export class ContextMenu {
     private searchInput: HTMLInputElement;
     private menuContent: HTMLElement;
     private worldPosition: Vector2 | null = null;
+    private boundDocumentClickHandler: () => void;
 
     /**
      * Callback fired when a node type is selected from the menu.
@@ -29,6 +30,8 @@ export class ContextMenu {
     public onNodeTypeSelect?: (type: string, worldPos: Vector2) => void;
 
     constructor() {
+        this.boundDocumentClickHandler = () => this.hide();
+
         this.menu = this.createMenuElement();
         document.body.appendChild(this.menu);
 
@@ -76,10 +79,8 @@ export class ContextMenu {
             e.stopPropagation();
         });
 
-        // Close menu when clicking outside
-        document.addEventListener('click', () => {
-            this.hide();
-        });
+        // Close menu when clicking outside (using bound handler for cleanup)
+        document.addEventListener('click', this.boundDocumentClickHandler);
 
         // Keyboard navigation
         this.searchInput.addEventListener('keydown', (e) => {
@@ -88,6 +89,19 @@ export class ContextMenu {
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 this.focusFirstItem();
+            }
+        });
+
+        // Event delegation for menu items (prevents listener accumulation)
+        this.menuContent.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            const item = target.closest('.context-menu-item') as HTMLElement;
+            if (item) {
+                const nodeType = item.getAttribute('data-node-type');
+                if (nodeType && this.worldPosition && this.onNodeTypeSelect) {
+                    this.onNodeTypeSelect(nodeType, this.worldPosition);
+                }
+                this.hide();
             }
         });
     }
@@ -129,18 +143,7 @@ export class ContextMenu {
         }
 
         this.menuContent.innerHTML = html;
-
-        // Attach click handlers
-        const items = this.menuContent.querySelectorAll('.context-menu-item');
-        items.forEach(item => {
-            item.addEventListener('click', () => {
-                const nodeType = item.getAttribute('data-node-type');
-                if (nodeType && this.worldPosition && this.onNodeTypeSelect) {
-                    this.onNodeTypeSelect(nodeType, this.worldPosition);
-                }
-                this.hide();
-            });
-        });
+        // Click handlers are managed via event delegation in setupEventListeners()
     }
 
     /**
@@ -196,5 +199,13 @@ export class ContextMenu {
         this.menu.classList.add('hidden');
         this.worldPosition = null;
         this.searchInput.value = '';
+    }
+
+    /**
+     * Cleanup - removes event listeners and DOM elements
+     */
+    public dispose(): void {
+        document.removeEventListener('click', this.boundDocumentClickHandler);
+        this.menu.remove();
     }
 }
