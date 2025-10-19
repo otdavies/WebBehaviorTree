@@ -15,8 +15,9 @@ export interface CustomNodeDefinition {
     icon: string;
     category: 'leaf' | 'decorator' | 'composite';
     tags?: string[];
-    version?: number;
-    createdAt?: string;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export class CustomNodeCatalog {
@@ -31,7 +32,7 @@ export class CustomNodeCatalog {
     }
 
     /**
-     * Saves a custom node definition
+     * Saves a custom node definition (creates new or updates existing)
      */
     public static saveCustomNode(definition: CustomNodeDefinition): void {
         // Validate
@@ -39,12 +40,15 @@ export class CustomNodeCatalog {
             throw new Error('Custom node must have a type and label');
         }
 
-        // Add metadata
+        // Check if updating existing node
+        const existing = this.customNodes.get(definition.type);
         const now = new Date().toISOString();
+
         const fullDefinition: CustomNodeDefinition = {
             ...definition,
-            version: 1,
-            createdAt: now,
+            version: existing ? existing.version + 1 : 1,
+            createdAt: existing ? existing.createdAt : now,
+            updatedAt: now,
             tags: definition.tags || [definition.label.toLowerCase(), 'custom']
         };
 
@@ -54,7 +58,34 @@ export class CustomNodeCatalog {
         // Persist to localStorage
         this.saveToLocalStorage();
 
-        console.log(`Custom node "${definition.label}" saved to catalog`);
+        console.log(`Custom node "${definition.label}" ${existing ? 'updated' : 'saved'} in catalog (v${fullDefinition.version})`);
+    }
+
+    /**
+     * Updates an existing custom node definition and increments its version
+     * Returns the updated definition with new version number
+     */
+    public static updateCustomNode(type: string, updates: Partial<CustomNodeDefinition>): CustomNodeDefinition | null {
+        const existing = this.customNodes.get(type);
+        if (!existing) {
+            console.error(`Cannot update non-existent custom node: ${type}`);
+            return null;
+        }
+
+        const now = new Date().toISOString();
+        const updated: CustomNodeDefinition = {
+            ...existing,
+            ...updates,
+            type: existing.type, // Prevent type change
+            version: existing.version + 1,
+            updatedAt: now
+        };
+
+        this.customNodes.set(type, updated);
+        this.saveToLocalStorage();
+
+        console.log(`Custom node "${updated.label}" updated to v${updated.version}`);
+        return updated;
     }
 
     /**

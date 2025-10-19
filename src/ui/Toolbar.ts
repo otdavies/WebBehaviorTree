@@ -11,9 +11,7 @@ export class Toolbar {
     private btnStep: HTMLButtonElement;
     private btnReset: HTMLButtonElement;
     private btnSettings: HTMLButtonElement;
-
-    private tickRateSlider: HTMLInputElement;
-    private tickRateValue: HTMLSpanElement;
+    private tickRateInput: HTMLInputElement;
 
     public onSettingsClick?: () => void;
 
@@ -26,9 +24,7 @@ export class Toolbar {
         this.btnStep = document.getElementById('btn-step') as HTMLButtonElement;
         this.btnReset = document.getElementById('btn-reset') as HTMLButtonElement;
         this.btnSettings = document.getElementById('btn-settings') as HTMLButtonElement;
-
-        this.tickRateSlider = document.getElementById('tick-rate-slider') as HTMLInputElement;
-        this.tickRateValue = document.getElementById('tick-rate-value') as HTMLSpanElement;
+        this.tickRateInput = document.getElementById('toolbar-tick-rate') as HTMLInputElement;
 
         this.setupEventListeners();
         this.updateUI();
@@ -64,10 +60,21 @@ export class Toolbar {
             }
         });
 
-        this.tickRateSlider.addEventListener('input', () => {
-            const rate = parseInt(this.tickRateSlider.value);
+        // Tick rate input
+        this.tickRateInput.addEventListener('input', () => {
+            const rate = parseInt(this.tickRateInput.value);
+            if (rate >= 1 && rate <= 60) {
+                this.behaviorTree.setTickRate(rate);
+            }
+        });
+
+        this.tickRateInput.addEventListener('blur', () => {
+            // Validate and clamp value on blur
+            let rate = parseInt(this.tickRateInput.value);
+            if (isNaN(rate) || rate < 1) rate = 1;
+            if (rate > 60) rate = 60;
+            this.tickRateInput.value = rate.toString();
             this.behaviorTree.setTickRate(rate);
-            this.tickRateValue.textContent = rate.toString();
         });
 
         // Update UI when tree state changes

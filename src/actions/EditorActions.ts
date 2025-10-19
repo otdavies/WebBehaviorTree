@@ -1,16 +1,16 @@
-import { Command } from '../core/Command.js';
+import { Operation } from '../core/Operation.js';
 import { EditorState } from '../state/EditorState.js';
 import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
 import { NodeRegistry } from '../core/NodeRegistry.js';
 
 /**
- * EditorActions: Comprehensive set of all actions that can mutate editor state
+ * EditorActions: Comprehensive set of all operations that can mutate editor state
  *
  * This file centralizes all mutations to make state management predictable and
- * enable full undo/redo support. Each action implements the Command interface.
+ * enable full undo/redo support. Each operation implements the Operation interface.
  *
- * IMPORTANT: All mutations to editor state should go through these actions.
+ * IMPORTANT: All mutations to editor state should go through these operations.
  * Direct mutations should be avoided to maintain undo/redo consistency.
  */
 
@@ -19,9 +19,9 @@ import { NodeRegistry } from '../core/NodeRegistry.js';
 // ============================================================================
 
 /**
- * AddNodeAction: Adds a single node to the editor
+ * AddNodeOperation: Adds a single node to the editor
  */
-export class AddNodeAction implements Command {
+export class AddNodeOperation implements Operation {
     public description: string;
 
     constructor(
@@ -41,11 +41,11 @@ export class AddNodeAction implements Command {
 }
 
 /**
- * RemoveNodeAction: Removes a single node from the editor
+ * RemoveNodeOperation: Removes a single node from the editor
  *
  * Captures parent connection info for proper undo
  */
-export class RemoveNodeAction implements Command {
+export class RemoveNodeOperation implements Operation {
     public description: string;
     private parentConnection: { parent: TreeNode; index: number } | null = null;
 
@@ -83,11 +83,11 @@ export class RemoveNodeAction implements Command {
 }
 
 /**
- * RemoveNodesAction: Removes multiple nodes from the editor
+ * RemoveNodesOperation: Removes multiple nodes from the editor
  *
  * Captures all parent connections for proper undo
  */
-export class RemoveNodesAction implements Command {
+export class RemoveNodesOperation implements Operation {
     public description: string;
     private nodeData: Array<{
         node: TreeNode;
@@ -138,9 +138,9 @@ export class RemoveNodesAction implements Command {
 }
 
 /**
- * MoveNodeAction: Moves a single node to a new position
+ * MoveNodeOperation: Moves a single node to a new position
  */
-export class MoveNodeAction implements Command {
+export class MoveNodeOperation implements Operation {
     public description: string;
     private oldPosition: Vector2;
 
@@ -162,9 +162,9 @@ export class MoveNodeAction implements Command {
 }
 
 /**
- * MoveNodesAction: Moves multiple nodes by a delta offset
+ * MoveNodesOperation: Moves multiple nodes by a delta offset
  */
-export class MoveNodesAction implements Command {
+export class MoveNodesOperation implements Operation {
     public description: string;
     private nodePositions: Map<TreeNode, { old: Vector2; new: Vector2 }> = new Map();
 
@@ -224,12 +224,12 @@ export class MoveNodesAction implements Command {
 }
 
 /**
- * DuplicateNodesAction: Duplicates nodes with their internal connections
+ * DuplicateNodesOperation: Duplicates nodes with their internal connections
  *
  * Creates copies of nodes while preserving connections between duplicated nodes.
- * This is a complex action that combines node creation and connection restoration.
+ * This is a complex operation that combines node creation and connection restoration.
  */
-export class DuplicateNodesAction implements Command {
+export class DuplicateNodesOperation implements Operation {
     public description: string;
     private duplicatedNodes: TreeNode[] = [];
     private connections: Array<{ parent: TreeNode; child: TreeNode; index: number }> = [];
@@ -329,9 +329,9 @@ export class DuplicateNodesAction implements Command {
 }
 
 /**
- * UpdateNodeLabelAction: Updates a node's display label
+ * UpdateNodeLabelOperation: Updates a node's display label
  */
-export class UpdateNodeLabelAction implements Command {
+export class UpdateNodeLabelOperation implements Operation {
     public description: string;
     private oldLabel: string;
 
@@ -353,11 +353,11 @@ export class UpdateNodeLabelAction implements Command {
 }
 
 /**
- * UpdateNodeCodeAction: Updates a node's JavaScript code
+ * UpdateNodeCodeOperation: Updates a node's JavaScript code
  *
  * Primarily used for ActionNodes and ConditionNodes
  */
-export class UpdateNodeCodeAction implements Command {
+export class UpdateNodeCodeOperation implements Operation {
     public description: string;
     private oldCode: string | undefined;
 
@@ -379,11 +379,11 @@ export class UpdateNodeCodeAction implements Command {
 }
 
 /**
- * UpdateNodeParameterAction: Updates a single parameter value
+ * UpdateNodeParameterOperation: Updates a single parameter value
  *
  * Used by the inspector panel when editing node parameters
  */
-export class UpdateNodeParameterAction implements Command {
+export class UpdateNodeParameterOperation implements Operation {
     public description: string;
     private oldValue: any;
 
@@ -406,11 +406,11 @@ export class UpdateNodeParameterAction implements Command {
 }
 
 /**
- * UpdateNodeConfigAction: Updates a node's configuration object
+ * UpdateNodeConfigOperation: Updates a node's configuration object
  *
  * Handles bulk config updates (e.g., when loading from JSON or applying presets)
  */
-export class UpdateNodeConfigAction implements Command {
+export class UpdateNodeConfigOperation implements Operation {
     public description: string;
     private oldConfig: Record<string, any>;
 
@@ -436,11 +436,11 @@ export class UpdateNodeConfigAction implements Command {
 // ============================================================================
 
 /**
- * ConnectNodesAction: Creates a parent-child relationship between two nodes
+ * ConnectNodesOperation: Creates a parent-child relationship between two nodes
  *
  * Handles disconnection from previous parent and restores it on undo
  */
-export class ConnectNodesAction implements Command {
+export class ConnectNodesOperation implements Operation {
     public description: string;
     private previousParent: TreeNode | null = null;
     private previousIndex: number = -1;
@@ -476,11 +476,11 @@ export class ConnectNodesAction implements Command {
 }
 
 /**
- * DisconnectNodeAction: Removes a child from its parent
+ * DisconnectNodeOperation: Removes a child from its parent
  *
  * Stores parent info for undo
  */
-export class DisconnectNodeAction implements Command {
+export class DisconnectNodeOperation implements Operation {
     public description: string;
     private previousParent: TreeNode;
     private previousIndex: number;
@@ -512,12 +512,12 @@ export class DisconnectNodeAction implements Command {
 // ============================================================================
 
 /**
- * SetRootAction: Sets the behavior tree root node
+ * SetRootOperation: Sets the behavior tree root node
  *
  * Note: In the current implementation, the root is auto-determined by Start nodes,
- * but this action allows manual root setting for future flexibility
+ * but this operation allows manual root setting for future flexibility
  */
-export class SetRootAction implements Command {
+export class SetRootOperation implements Operation {
     public description: string;
     private oldRoot: TreeNode | null;
 
@@ -541,11 +541,11 @@ export class SetRootAction implements Command {
 }
 
 /**
- * ClearAllNodesAction: Removes all nodes from the editor
+ * ClearAllNodesOperation: Removes all nodes from the editor
  *
  * Captures complete tree state for undo
  */
-export class ClearAllNodesAction implements Command {
+export class ClearAllNodesOperation implements Operation {
     public description: string = 'Clear all nodes';
     private savedNodes: TreeNode[] = [];
     private savedRoot: TreeNode | null = null;
@@ -587,11 +587,11 @@ export class ClearAllNodesAction implements Command {
 }
 
 /**
- * ImportTreeAction: Imports a behavior tree from JSON data
+ * ImportTreeOperation: Imports a behavior tree from JSON data
  *
  * Replaces the entire tree state. Captures previous state for undo.
  */
-export class ImportTreeAction implements Command {
+export class ImportTreeOperation implements Operation {
     public description: string = 'Import tree';
     private previousNodes: TreeNode[] = [];
     private previousRoot: TreeNode | null = null;
@@ -641,12 +641,12 @@ export class ImportTreeAction implements Command {
 // ============================================================================
 
 /**
- * SetSelectionAction: Updates the current selection
+ * SetSelectionOperation: Updates the current selection
  *
  * This is typically NOT added to the undo stack, but can be used
  * for selection tracking in complex multi-step operations
  */
-export class SetSelectionAction implements Command {
+export class SetSelectionOperation implements Operation {
     public description: string;
     private previousSelection: Set<TreeNode>;
 
@@ -674,11 +674,11 @@ export class SetSelectionAction implements Command {
 }
 
 /**
- * ToggleGridAction: Toggles grid visibility
+ * ToggleGridOperation: Toggles grid visibility
  *
- * Simple toggle action for UI settings
+ * Simple toggle operation for UI settings
  */
-export class ToggleGridAction implements Command {
+export class ToggleGridOperation implements Operation {
     public description: string = 'Toggle grid visibility';
 
     constructor(
@@ -695,11 +695,11 @@ export class ToggleGridAction implements Command {
 }
 
 /**
- * ToggleSnapToGridAction: Toggles snap-to-grid setting
+ * ToggleSnapToGridOperation: Toggles snap-to-grid setting
  *
- * Simple toggle action for UI settings
+ * Simple toggle operation for UI settings
  */
-export class ToggleSnapToGridAction implements Command {
+export class ToggleSnapToGridOperation implements Operation {
     public description: string = 'Toggle snap to grid';
 
     constructor(
@@ -720,28 +720,28 @@ export class ToggleSnapToGridAction implements Command {
 // ============================================================================
 
 /**
- * BatchAction: Executes multiple actions as a single undoable unit
+ * BatchOperation: Executes multiple operations as a single undoable unit
  *
  * Useful for complex operations that involve multiple steps
  */
-export class BatchAction implements Command {
+export class BatchOperation implements Operation {
     public description: string;
 
     constructor(
-        private actions: Command[],
+        private operations: Operation[],
         description?: string
     ) {
-        this.description = description || `Batch operation (${actions.length} actions)`;
+        this.description = description || `Batch operation (${operations.length} operations)`;
     }
 
     public execute(): void {
-        this.actions.forEach(action => action.execute());
+        this.operations.forEach(operation => operation.execute());
     }
 
     public undo(): void {
         // Undo in reverse order
-        for (let i = this.actions.length - 1; i >= 0; i--) {
-            this.actions[i].undo();
+        for (let i = this.operations.length - 1; i >= 0; i--) {
+            this.operations[i].undo();
         }
     }
 
@@ -755,70 +755,70 @@ export class BatchAction implements Command {
 // ============================================================================
 
 /**
- * Action factory functions for easier usage
+ * Operation factory functions for easier usage
  *
- * These provide a cleaner API for creating actions without using 'new' everywhere
+ * These provide a cleaner API for creating operations without using 'new' everywhere
  */
 export const EditorActions = {
     // Node operations
     addNode: (editorState: EditorState, node: TreeNode) =>
-        new AddNodeAction(editorState, node),
+        new AddNodeOperation(editorState, node),
 
     removeNode: (editorState: EditorState, node: TreeNode) =>
-        new RemoveNodeAction(editorState, node),
+        new RemoveNodeOperation(editorState, node),
 
     removeNodes: (editorState: EditorState, nodes: TreeNode[]) =>
-        new RemoveNodesAction(editorState, nodes),
+        new RemoveNodesOperation(editorState, nodes),
 
     moveNode: (node: TreeNode, newPosition: Vector2) =>
-        new MoveNodeAction(node, newPosition),
+        new MoveNodeOperation(node, newPosition),
 
     moveNodes: (nodes: TreeNode[], delta: Vector2) =>
-        new MoveNodesAction(nodes, delta),
+        new MoveNodesOperation(nodes, delta),
 
     duplicateNodes: (editorState: EditorState, nodes: TreeNode[], offset?: Vector2) =>
-        new DuplicateNodesAction(editorState, nodes, offset),
+        new DuplicateNodesOperation(editorState, nodes, offset),
 
     updateNodeLabel: (node: TreeNode, newLabel: string) =>
-        new UpdateNodeLabelAction(node, newLabel),
+        new UpdateNodeLabelOperation(node, newLabel),
 
     updateNodeCode: (node: TreeNode, newCode: string) =>
-        new UpdateNodeCodeAction(node, newCode),
+        new UpdateNodeCodeOperation(node, newCode),
 
     updateNodeParameter: (node: TreeNode, paramName: string, newValue: any) =>
-        new UpdateNodeParameterAction(node, paramName, newValue),
+        new UpdateNodeParameterOperation(node, paramName, newValue),
 
     updateNodeConfig: (node: TreeNode, newConfig: Record<string, any>) =>
-        new UpdateNodeConfigAction(node, newConfig),
+        new UpdateNodeConfigOperation(node, newConfig),
 
     // Connection operations
     connectNodes: (editorState: EditorState, parent: TreeNode, child: TreeNode, childIndex?: number) =>
-        new ConnectNodesAction(editorState, parent, child, childIndex),
+        new ConnectNodesOperation(editorState, parent, child, childIndex),
 
     disconnectNode: (editorState: EditorState, node: TreeNode) =>
-        new DisconnectNodeAction(editorState, node),
+        new DisconnectNodeOperation(editorState, node),
 
     // Tree operations
     setRoot: (editorState: EditorState, root: TreeNode | null) =>
-        new SetRootAction(editorState, root),
+        new SetRootOperation(editorState, root),
 
     clearAllNodes: (editorState: EditorState) =>
-        new ClearAllNodesAction(editorState),
+        new ClearAllNodesOperation(editorState),
 
     importTree: (editorState: EditorState, jsonData: any) =>
-        new ImportTreeAction(editorState, jsonData),
+        new ImportTreeOperation(editorState, jsonData),
 
     // UI state operations
     setSelection: (selectionManager: any, newSelection: Set<TreeNode>) =>
-        new SetSelectionAction(selectionManager, newSelection),
+        new SetSelectionOperation(selectionManager, newSelection),
 
     toggleGrid: (editorState: EditorState) =>
-        new ToggleGridAction(editorState),
+        new ToggleGridOperation(editorState),
 
     toggleSnapToGrid: (editorState: EditorState) =>
-        new ToggleSnapToGridAction(editorState),
+        new ToggleSnapToGridOperation(editorState),
 
     // Batch operations
-    batch: (actions: Command[], description?: string) =>
-        new BatchAction(actions, description)
+    batch: (operations: Operation[], description?: string) =>
+        new BatchOperation(operations, description)
 };

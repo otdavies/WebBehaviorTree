@@ -1,25 +1,25 @@
 import { BehaviorTree } from '../core/BehaviorTree.js';
 import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
-import { CommandHistory } from '../core/Command.js';
+import { OperationHistory } from '../core/Operation.js';
 import { NodeRegistry } from '../core/NodeRegistry.js';
 
 /**
  * EditorState: Central state management for the behavior tree editor
  *
- * This class manages the state of the editor using an action-based architecture.
+ * This class manages the state of the editor using an operation-based architecture.
  *
  * **Architecture:**
  * - Mutable state is stored in public properties
- * - State changes MUST go through Command pattern for undo/redo
- * - Internal mutation methods are used by actions/commands only
+ * - State changes MUST go through Operation pattern for undo/redo
+ * - Internal mutation methods are used by operations only
  *
  * **Usage Pattern:**
- * Good (use actions):
+ * Good (use operations):
  * ```typescript
- * // UI code should dispatch actions
- * const action = new AddNodeAction(state, node);
- * state.commandHistory.execute(action);
+ * // UI code should dispatch operations
+ * const operation = new AddNodeOperation(state, node);
+ * state.operationHistory.execute(operation);
  * ```
  *
  * Bad (direct mutation):
@@ -38,11 +38,11 @@ import { NodeRegistry } from '../core/NodeRegistry.js';
  * - `editingNode`: The node currently being edited in Monaco
  *
  * **Immutable/Infrastructure:**
- * - `commandHistory`: Command history for undo/redo operations
+ * - `operationHistory`: Operation history for undo/redo operations
  *
  * **Method Categories:**
  * Methods are marked with JSDoc tags indicating their mutation behavior:
- * - `@internal` - Internal methods used by actions. Do not call from UI code.
+ * - `@internal` - Internal methods used by operations. Do not call from UI code.
  * - `@readonly` - Read-only queries that don't mutate state
  */
 export class EditorState {
@@ -101,23 +101,23 @@ export class EditorState {
     // ===========================
 
     /**
-     * Command history for undo/redo functionality
-     * This is the foundation for the action-based architecture
+     * Operation history for undo/redo functionality
+     * This is the foundation for the operation-based architecture
      */
-    public commandHistory: CommandHistory = new CommandHistory();
+    public operationHistory: OperationHistory = new OperationHistory();
 
     constructor() {
         this.behaviorTree = new BehaviorTree();
     }
 
     // ===========================
-    // NODE MANAGEMENT (INTERNAL - USED BY ACTIONS)
+    // NODE MANAGEMENT (INTERNAL - USED BY OPERATIONS)
     // ===========================
 
     /**
      * Adds a node to the editor
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * @mutation Adds node to nodes array and syncs with behavior tree
      * @param node - The node to add
@@ -131,7 +131,7 @@ export class EditorState {
     /**
      * Removes a node from the editor
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * This removes the node from:
      * - The nodes array
@@ -164,7 +164,7 @@ export class EditorState {
     /**
      * Removes multiple nodes from the editor
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * @mutation Removes all specified nodes and their connections
      * @param nodes - Array of nodes to remove
@@ -220,13 +220,13 @@ export class EditorState {
     }
 
     // ===========================
-    // CONNECTION MANAGEMENT (INTERNAL - USED BY ACTIONS)
+    // CONNECTION MANAGEMENT (INTERNAL - USED BY OPERATIONS)
     // ===========================
 
     /**
      * Creates a connection between a parent and child node
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * This method:
      * - Validates the connection (no cycles, no self-connections)
@@ -310,7 +310,7 @@ export class EditorState {
     /**
      * Disconnects a child from its parent
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * @mutation Removes parent-child relationship
      * @param node - The child node to disconnect
@@ -322,13 +322,13 @@ export class EditorState {
     }
 
     // ===========================
-    // STATE MANAGEMENT (INTERNAL - USED BY ACTIONS)
+    // STATE MANAGEMENT (INTERNAL - USED BY OPERATIONS)
     // ===========================
 
     /**
      * Clears all state including nodes, tree, and UI state
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * This resets:
      * - All nodes (array cleared)
@@ -347,13 +347,13 @@ export class EditorState {
     }
 
     // ===========================
-    // SERIALIZATION (INTERNAL - USED BY ACTIONS)
+    // SERIALIZATION (INTERNAL - USED BY OPERATIONS)
     // ===========================
 
     /**
      * Imports a tree from JSON data
      *
-     * **@internal** Used by actions internally. Do not call directly from UI code.
+     * **@internal** Used by operations internally. Do not call directly from UI code.
      *
      * This method:
      * - Deserializes ALL nodes from JSON (both connected and disconnected)

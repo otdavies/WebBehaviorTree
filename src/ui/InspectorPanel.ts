@@ -1,7 +1,7 @@
 import { TreeNode } from '../core/TreeNode.js';
 import { ParameterDefinition } from '../core/NodeParameter.js';
-import { CommandHistory } from '../core/Command.js';
-import { UpdateNodeLabelAction, UpdateNodeParameterAction } from '../actions/EditorActions.js';
+import { OperationHistory } from '../core/Operation.js';
+import { UpdateNodeLabelOperation, UpdateNodeParameterOperation } from '../actions/EditorActions.js';
 
 /**
  * InspectorPanel: Unity-style inspector for viewing and editing node properties
@@ -9,9 +9,9 @@ import { UpdateNodeLabelAction, UpdateNodeParameterAction } from '../actions/Edi
 export class InspectorPanel {
     private panel: HTMLElement;
     private currentNode: TreeNode | null = null;
-    private commandHistory: CommandHistory;
+    private commandHistory: OperationHistory;
 
-    constructor(commandHistory: CommandHistory) {
+    constructor(commandHistory: OperationHistory) {
         this.commandHistory = commandHistory;
         // Panel will be created in the HTML
         this.panel = document.getElementById('inspector-panel')!;
@@ -184,8 +184,8 @@ export class InspectorPanel {
         if (labelInput) {
             labelInput.addEventListener('change', () => {
                 if (this.currentNode && labelInput.value !== this.currentNode.label) {
-                    const action = new UpdateNodeLabelAction(this.currentNode, labelInput.value);
-                    this.commandHistory.execute(action);
+                    const operation = new UpdateNodeLabelOperation(this.currentNode, labelInput.value);
+                    this.commandHistory.execute(operation);
                 }
             });
         }
@@ -208,11 +208,11 @@ export class InspectorPanel {
                     value = input.value;
                 }
 
-                // Only create action if value actually changed
+                // Only create operation if value actually changed
                 const currentValue = this.currentNode.parameters.get(name);
                 if (value !== currentValue) {
-                    const action = new UpdateNodeParameterAction(this.currentNode, name, value);
-                    this.commandHistory.execute(action);
+                    const operation = new UpdateNodeParameterOperation(this.currentNode, name, value);
+                    this.commandHistory.execute(operation);
                 }
             };
 

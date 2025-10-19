@@ -1,43 +1,43 @@
 /**
- * Command: Interface for undoable actions using the Command pattern
+ * Operation: Interface for undoable operations using the Command pattern
  */
-export interface Command {
+export interface Operation {
     /**
-     * Executes the command
+     * Executes the operation
      */
     execute(): void;
 
     /**
-     * Undoes the command (reverses the execute operation)
+     * Undoes the operation (reverses the execute operation)
      */
     undo(): void;
 
     /**
-     * Optional: Redoes the command (same as execute, but can be overridden)
+     * Optional: Redoes the operation (same as execute, but can be overridden)
      */
     redo?(): void;
 
     /**
-     * Description of the command for display purposes
+     * Description of the operation for display purposes
      */
     description: string;
 }
 
 /**
- * CommandHistory: Manages undo/redo stacks
+ * OperationHistory: Manages undo/redo stacks
  */
-export class CommandHistory {
-    private undoStack: Command[] = [];
-    private redoStack: Command[] = [];
+export class OperationHistory {
+    private undoStack: Operation[] = [];
+    private redoStack: Operation[] = [];
     private maxStackSize: number = 100;
 
     /**
-     * Executes a command and adds it to the undo stack
+     * Executes an operation and adds it to the undo stack
      */
-    public execute(command: Command): void {
-        command.execute();
-        this.undoStack.push(command);
-        this.redoStack = []; // Clear redo stack when new command is executed
+    public execute(operation: Operation): void {
+        operation.execute();
+        this.undoStack.push(operation);
+        this.redoStack = []; // Clear redo stack when new operation is executed
 
         // Limit stack size
         if (this.undoStack.length > this.maxStackSize) {
@@ -46,12 +46,12 @@ export class CommandHistory {
     }
 
     /**
-     * Records a command that has already been executed (for operations that
-     * mutate state before creating the command, like drag operations)
+     * Records an operation that has already been executed (for operations that
+     * mutate state before creating the operation, like drag operations)
      */
-    public recordCompleted(command: Command): void {
-        this.undoStack.push(command);
-        this.redoStack = []; // Clear redo stack when new command is recorded
+    public recordCompleted(operation: Operation): void {
+        this.undoStack.push(operation);
+        this.redoStack = []; // Clear redo stack when new operation is recorded
 
         // Limit stack size
         if (this.undoStack.length > this.maxStackSize) {
@@ -60,34 +60,34 @@ export class CommandHistory {
     }
 
     /**
-     * Undoes the last command
+     * Undoes the last operation
      */
     public undo(): boolean {
         if (!this.canUndo()) {
             return false;
         }
 
-        const command = this.undoStack.pop()!;
-        command.undo();
-        this.redoStack.push(command);
+        const operation = this.undoStack.pop()!;
+        operation.undo();
+        this.redoStack.push(operation);
         return true;
     }
 
     /**
-     * Redoes the last undone command
+     * Redoes the last undone operation
      */
     public redo(): boolean {
         if (!this.canRedo()) {
             return false;
         }
 
-        const command = this.redoStack.pop()!;
-        if (command.redo) {
-            command.redo();
+        const operation = this.redoStack.pop()!;
+        if (operation.redo) {
+            operation.redo();
         } else {
-            command.execute();
+            operation.execute();
         }
-        this.undoStack.push(command);
+        this.undoStack.push(operation);
         return true;
     }
 

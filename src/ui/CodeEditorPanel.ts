@@ -1,7 +1,7 @@
 import { TreeNode } from '../core/TreeNode.js';
 import { EditorState } from '../state/EditorState.js';
-import { UpdateNodeCodeAction } from '../actions/EditorActions.js';
-import { CommandHistory } from '../core/Command.js';
+import { UpdateNodeCodeOperation } from '../actions/EditorActions.js';
+import { OperationHistory } from '../core/Operation.js';
 
 declare const monaco: any;
 
@@ -10,14 +10,19 @@ declare const monaco: any;
  */
 export class CodeEditorPanel {
     private editorState: EditorState;
-    private commandHistory: CommandHistory;
+    private commandHistory: OperationHistory;
     private panel: HTMLElement;
     private btnClose: HTMLButtonElement;
     private btnSave: HTMLButtonElement;
+    private btnSaveAsNew: HTMLButtonElement;
+    private btnOverrideDefinition: HTMLButtonElement;
+    private btnResyncWithLibrary: HTMLButtonElement;
+    private btnUpdateToLatest: HTMLButtonElement;
     private btnSaveToCatalog: HTMLButtonElement;
     private editorContainer: HTMLElement;
     private nodeLabel: HTMLElement;
     private deviationIndicator: HTMLElement | null = null;
+    private syncStatusIndicator: HTMLElement | null = null;
     private resizeHandle: HTMLElement | null = null;
 
     private monacoEditor: any = null;
@@ -29,7 +34,7 @@ export class CodeEditorPanel {
     private startX: number = 0;
     private startWidth: number = 0;
 
-    constructor(editorState: EditorState, commandHistory: CommandHistory) {
+    constructor(editorState: EditorState, commandHistory: OperationHistory) {
         this.editorState = editorState;
         this.commandHistory = commandHistory;
 
@@ -39,12 +44,17 @@ export class CodeEditorPanel {
         this.editorContainer = document.getElementById('monaco-editor-container')!;
         this.nodeLabel = document.getElementById('editor-node-label')!;
 
-        // Create buttons dynamically
-        this.btnSave = this.createButton('btn-save-code', 'btn-primary', '<i class="fas fa-save"></i> Save', 'Save code (Ctrl+S)');
-        this.btnSaveToCatalog = this.createButton('btn-save-catalog', 'btn-secondary', '<i class="fas fa-bookmark"></i> Save to Catalog', 'Save as reusable custom node');
+        // Create buttons dynamically (icon-only buttons with tooltips)
+        this.btnSave = this.createButton('btn-save', 'btn-editor btn-icon', '<i class="fas fa-save"></i>', 'Save (Ctrl+S)');
+        this.btnSaveAsNew = this.createButton('btn-save-as-new', 'btn-editor btn-icon', '<i class="fas fa-plus-circle"></i>', 'Save as new custom node');
+        this.btnOverrideDefinition = this.createButton('btn-override-def', 'btn-editor btn-icon', '<i class="fas fa-cloud-upload-alt"></i>', 'Push to library (update definition & sync all instances)');
+        this.btnResyncWithLibrary = this.createButton('btn-resync', 'btn-editor btn-icon', '<i class="fas fa-undo"></i>', 'Revert to library version (discard changes)');
+        this.btnUpdateToLatest = this.createButton('btn-update-latest', 'btn-editor btn-icon', '<i class="fas fa-cloud-download-alt"></i>', 'Pull from library (update to latest version)');
+        this.btnSaveToCatalog = this.createButton('btn-save-catalog', 'btn-editor btn-icon', '<i class="fas fa-bookmark"></i>', 'Save as reusable custom node');
 
         this.setupResizeHandle();
         this.setupDeviationIndicator();
+        this.setupSyncStatusIndicator();
         this.setupHeaderButtons();
         this.setupEventListeners();
         this.initializeMonaco();
@@ -83,7 +93,7 @@ export class CodeEditorPanel {
             if (!this.isResizing) return;
 
             const deltaX = this.startX - e.clientX;
-            const newWidth = Math.max(300, Math.min(1200, this.startWidth + deltaX));
+            const newWidth = Math.max(400, Math.min(1200, this.startWidth + deltaX));
             this.panel.style.width = `${newWidth}px`;
         });
 
@@ -96,35 +106,92 @@ export class CodeEditorPanel {
      * Sets up the deviation indicator
      */
     private setupDeviationIndicator(): void {
-        const panelHeaderActions = this.panel.querySelector('.panel-header-actions');
-        if (!panelHeaderActions) return;
+        const editorToolbar = this.panel.querySelector('.editor-toolbar');
+        if (!editorToolbar) return;
 
         this.deviationIndicator = document.createElement('div');
         this.deviationIndicator.className = 'deviation-indicator hidden';
         this.deviationIndicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Modified';
         this.deviationIndicator.title = 'Code has been modified from default template';
-        panelHeaderActions.appendChild(this.deviationIndicator);
+        editorToolbar.appendChild(this.deviationIndicator);
+    }
+
+    /**
+     * Sets up the sync status indicator
+     */
+    private setupSyncStatusIndicator(): void {
+        const editorToolbar = this.panel.querySelector('.editor-toolbar');
+        if (!editorToolbar) return;
+
+        this.syncStatusIndicator = document.createElement('div');
+        this.syncStatusIndicator.className = 'sync-status-indicator hidden';
+        editorToolbar.appendChild(this.syncStatusIndicator);
     }
 
     /**
      * Sets up the header buttons
      */
     private setupHeaderButtons(): void {
-        const panelHeaderActions = this.panel.querySelector('.panel-header-actions');
-        if (!panelHeaderActions) return;
+        const editorToolbar = this.panel.querySelector('.editor-toolbar');
+        if (!editorToolbar) return;
 
-        // Add buttons to header (after deviation indicator)
-        panelHeaderActions.appendChild(this.btnSave);
-        panelHeaderActions.appendChild(this.btnSaveToCatalog);
+        // Add all buttons to toolbar
+        editorToolbar.appendChild(this.btnSave);
+        editorToolbar.appendChild(this.btnSaveAsNew);
+        editorToolbar.appendChild(this.btnOverrideDefinition);
+        editorToolbar.appendChild(this.btnResyncWithLibrary);
+        editorToolbar.appendChild(this.btnUpdateToLatest);
+        editorToolbar.appendChild(this.btnSaveToCatalog);
 
         // Event listeners
-        this.btnSave.addEventListener('click', () => {
-            this.saveCodeAndFile();
-        });
+        this.btnSave.addEventListener('click', () => this.saveCodeAndFile());
+        this.btnSaveAsNew.addEventListener('click', () => this.saveAsNewNode());
+        this.btnOverrideDefinition.addEventListener('click', () => this.overrideExistingDefinition());
+        this.btnResyncWithLibrary.addEventListener('click', () => this.resyncWithLibrary());
+        this.btnUpdateToLatest.addEventListener('click', () => this.updateToLatestVersion());
+        this.btnSaveToCatalog.addEventListener('click', () => this.saveToCatalog());
+    }
 
-        this.btnSaveToCatalog.addEventListener('click', () => {
-            this.saveToCatalog();
-        });
+    /**
+     * Updates which buttons are visible based on node state
+     */
+    private updateButtonVisibility(): void {
+        if (!this.currentNode) return;
+
+        const isLibraryNode = !!this.currentNode.libraryType;
+        const isModified = this.currentNode.isModified;
+
+        let isOutOfSync = false;
+        let libraryDef: any = null;
+
+        if (isLibraryNode) {
+            const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+            if (CustomNodeCatalog) {
+                libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+                if (libraryDef) {
+                    isOutOfSync = this.currentNode.libraryVersion !== libraryDef.version;
+                }
+            }
+        }
+
+        // Show/hide buttons based on state
+        if (isLibraryNode) {
+            // Library node - show most buttons
+            this.btnSave.classList.remove('hidden');
+            this.btnSaveAsNew.classList.remove('hidden');
+            this.btnOverrideDefinition.classList.toggle('hidden', !libraryDef);
+            this.btnResyncWithLibrary.classList.toggle('hidden', !isModified || !libraryDef);
+            this.btnUpdateToLatest.classList.toggle('hidden', !isOutOfSync || !libraryDef);
+            this.btnSaveToCatalog.classList.add('hidden');
+        } else {
+            // Regular action node - only show save as new and catalog
+            this.btnSave.classList.add('hidden');
+            this.btnSaveAsNew.classList.remove('hidden');
+            this.btnOverrideDefinition.classList.add('hidden');
+            this.btnResyncWithLibrary.classList.add('hidden');
+            this.btnUpdateToLatest.classList.add('hidden');
+            this.btnSaveToCatalog.classList.add('hidden');
+        }
     }
 
     /**
@@ -192,6 +259,10 @@ export class CodeEditorPanel {
         this.currentNode = node;
         this.nodeLabel.textContent = node.label;
 
+        // Apply node color to the badge
+        this.nodeLabel.style.borderColor = node.color;
+        this.nodeLabel.style.backgroundColor = this.hexToRgba(node.color, 0.1);
+
         // Store the default code for this node type
         this.defaultCode = this.getDefaultCodeForNode(node);
 
@@ -200,7 +271,24 @@ export class CodeEditorPanel {
         }
 
         this.updateDeviationIndicator();
+        this.updateSyncStatusIndicator();
+        this.updateButtonVisibility();
         this.show();
+    }
+
+    /**
+     * Converts hex color to rgba with specified alpha
+     */
+    private hexToRgba(hex: string, alpha: number): string {
+        // Remove # if present
+        hex = hex.replace('#', '');
+
+        // Parse hex values
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     /**
@@ -250,21 +338,357 @@ export class CodeEditorPanel {
     private saveCodeAndFile(): void {
         if (this.currentNode && this.monacoEditor) {
             const newCode = this.monacoEditor.getValue();
-            const action = new UpdateNodeCodeAction(this.currentNode, newCode);
-            this.commandHistory.execute(action);
+            const operation = new UpdateNodeCodeOperation(this.currentNode, newCode);
+            this.commandHistory.execute(operation);
+
+            // Mark node as modified if it's from a library
+            if (this.currentNode.libraryType && !this.currentNode.isModified) {
+                this.currentNode.isModified = true;
+            }
 
             // Trigger file save callback if provided
             if (this.onSaveToFile) {
                 this.onSaveToFile();
             }
 
+            // Update indicators and button visibility
+            this.updateSyncStatusIndicator();
+            this.updateButtonVisibility();
+
             // Show visual feedback
-            const saveBtn = this.btnSave;
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+            const originalIcon = this.btnSave.innerHTML;
+            this.btnSave.innerHTML = '<i class="fas fa-check"></i>';
+            this.btnSave.style.color = '#89D185';
             setTimeout(() => {
-                saveBtn.innerHTML = originalText;
+                this.btnSave.innerHTML = originalIcon;
+                this.btnSave.style.color = '';
             }, 1000);
+        }
+    }
+
+    /**
+     * Saves as a new custom node in the library
+     */
+    private saveAsNewNode(): void {
+        if (!this.currentNode || !this.monacoEditor) return;
+
+        const nodeName = prompt('Enter a name for this custom node:', '');
+        if (!nodeName || nodeName.trim() === '') return;
+
+        const nodeDescription = prompt('Enter a description (optional):', '') || '';
+
+        // Import CustomNodeCatalog
+        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+        if (!CustomNodeCatalog) {
+            alert('Custom node catalog not available');
+            return;
+        }
+
+        const code = this.monacoEditor.getValue();
+
+        try {
+            const customNodeDef = {
+                type: `custom_${nodeName.toLowerCase().replace(/\s+/g, '_')}`,
+                label: nodeName,
+                description: nodeDescription,
+                code: code,
+                icon: this.currentNode.icon,
+                category: 'leaf' as 'leaf',
+                version: 1,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            CustomNodeCatalog.saveCustomNode(customNodeDef);
+
+            // Trigger callback to register the custom node immediately
+            if (this.onCustomNodeSaved) {
+                this.onCustomNodeSaved(customNodeDef);
+            }
+
+            // Update current node to track the library
+            this.currentNode.libraryType = customNodeDef.type;
+            this.currentNode.libraryVersion = customNodeDef.version;
+            this.currentNode.isModified = false;
+
+            // Update indicators and button visibility
+            this.updateSyncStatusIndicator();
+            this.updateButtonVisibility();
+
+            // Visual feedback
+            const originalIcon = this.btnSaveAsNew.innerHTML;
+            this.btnSaveAsNew.innerHTML = '<i class="fas fa-check"></i>';
+            this.btnSaveAsNew.style.color = '#89D185';
+            setTimeout(() => {
+                this.btnSaveAsNew.innerHTML = originalIcon;
+                this.btnSaveAsNew.style.color = '';
+            }, 2000);
+
+            alert(`Custom node "${nodeName}" created successfully!`);
+
+        } catch (error) {
+            alert('Failed to save custom node: ' + (error as Error).message);
+        }
+    }
+
+    /**
+     * Overrides the existing library definition and syncs all instances
+     */
+    private overrideExistingDefinition(): void {
+        if (!this.currentNode || !this.monacoEditor) return;
+
+        // Check if this node has a library type
+        if (!this.currentNode.libraryType) {
+            alert('This node is not associated with a library definition.\nUse "Save as New Node" to create a library definition first.');
+            return;
+        }
+
+        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+        if (!CustomNodeCatalog) {
+            alert('Custom node catalog not available');
+            return;
+        }
+
+        // Get the current library definition
+        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        if (!libraryDef) {
+            alert(`Library definition for "${this.currentNode.libraryType}" not found.`);
+            return;
+        }
+
+        // Confirm with user
+        const confirmMsg = `This will update the library definition "${libraryDef.label}" and sync all non-modified instances.\n\nAre you sure?`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        const newCode = this.monacoEditor.getValue();
+
+        try {
+            // Update the library definition
+            const updated = CustomNodeCatalog.updateCustomNode(this.currentNode.libraryType, {
+                code: newCode,
+                label: libraryDef.label,
+                description: libraryDef.description,
+                icon: libraryDef.icon,
+                category: libraryDef.category
+            });
+
+            if (!updated) {
+                alert('Failed to update library definition');
+                return;
+            }
+
+            // Sync all non-modified instances
+            if (this.onLibraryDefinitionUpdated) {
+                this.onLibraryDefinitionUpdated(this.currentNode.libraryType, updated);
+            }
+
+            // Update current node
+            this.currentNode.libraryVersion = updated.version;
+            this.currentNode.isModified = false;
+
+            // Trigger file save
+            if (this.onSaveToFile) {
+                this.onSaveToFile();
+            }
+
+            // Update indicators and button visibility
+            this.updateSyncStatusIndicator();
+            this.updateButtonVisibility();
+
+            // Visual feedback
+            const originalIcon = this.btnOverrideDefinition.innerHTML;
+            this.btnOverrideDefinition.innerHTML = '<i class="fas fa-check"></i>';
+            this.btnOverrideDefinition.style.color = '#89D185';
+            setTimeout(() => {
+                this.btnOverrideDefinition.innerHTML = originalIcon;
+                this.btnOverrideDefinition.style.color = '';
+            }, 2000);
+
+            alert(`Library definition "${libraryDef.label}" updated to v${updated.version}.\nAll non-modified instances have been synced.`);
+
+        } catch (error) {
+            alert('Failed to override library definition: ' + (error as Error).message);
+        }
+    }
+
+    /**
+     * Resyncs the node with its library definition (abandons local changes)
+     */
+    private resyncWithLibrary(): void {
+        if (!this.currentNode || !this.monacoEditor) return;
+
+        if (!this.currentNode.libraryType) {
+            alert('This node is not associated with a library definition.');
+            return;
+        }
+
+        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+        if (!CustomNodeCatalog) {
+            alert('Custom node catalog not available');
+            return;
+        }
+
+        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        if (!libraryDef) {
+            alert(`Library definition for "${this.currentNode.libraryType}" not found.`);
+            return;
+        }
+
+        // Confirm with user
+        const confirmMsg = `This will abandon your local changes and restore the library version (v${libraryDef.version}).\n\nAre you sure?`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        // Restore library code
+        this.currentNode.code = libraryDef.code;
+        this.currentNode.libraryVersion = libraryDef.version;
+        this.currentNode.isModified = false;
+
+        // Update editor
+        this.monacoEditor.setValue(libraryDef.code);
+
+        // Update indicators and button visibility
+        this.updateDeviationIndicator();
+        this.updateSyncStatusIndicator();
+        this.updateButtonVisibility();
+
+        // Save
+        if (this.onSaveToFile) {
+            this.onSaveToFile();
+        }
+
+        // Visual feedback
+        const originalIcon = this.btnResyncWithLibrary.innerHTML;
+        this.btnResyncWithLibrary.innerHTML = '<i class="fas fa-check"></i>';
+        this.btnResyncWithLibrary.style.color = '#89D185';
+        setTimeout(() => {
+            this.btnResyncWithLibrary.innerHTML = originalIcon;
+            this.btnResyncWithLibrary.style.color = '';
+        }, 2000);
+
+        console.log(`Node resynced with library v${libraryDef.version}`);
+    }
+
+    /**
+     * Updates the node to the latest library version
+     */
+    private updateToLatestVersion(): void {
+        if (!this.currentNode || !this.monacoEditor) return;
+
+        if (!this.currentNode.libraryType) {
+            alert('This node is not associated with a library definition.');
+            return;
+        }
+
+        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+        if (!CustomNodeCatalog) {
+            alert('Custom node catalog not available');
+            return;
+        }
+
+        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        if (!libraryDef) {
+            alert(`Library definition for "${this.currentNode.libraryType}" not found.`);
+            return;
+        }
+
+        // Check if actually out of sync
+        if (this.currentNode.libraryVersion === libraryDef.version) {
+            alert('This node is already at the latest version.');
+            return;
+        }
+
+        // Confirm with user (especially important if modified)
+        let confirmMsg = `Update from v${this.currentNode.libraryVersion} to v${libraryDef.version}?`;
+        if (this.currentNode.isModified) {
+            confirmMsg = `This will update to v${libraryDef.version} and you will lose your local modifications.\n\nAre you sure?`;
+        }
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+
+        // Update to latest version
+        this.currentNode.code = libraryDef.code;
+        this.currentNode.libraryVersion = libraryDef.version;
+        this.currentNode.isModified = false;
+
+        // Update editor
+        this.monacoEditor.setValue(libraryDef.code);
+
+        // Update indicators and button visibility
+        this.updateDeviationIndicator();
+        this.updateSyncStatusIndicator();
+        this.updateButtonVisibility();
+
+        // Save
+        if (this.onSaveToFile) {
+            this.onSaveToFile();
+        }
+
+        // Visual feedback
+        const originalIcon = this.btnUpdateToLatest.innerHTML;
+        this.btnUpdateToLatest.innerHTML = '<i class="fas fa-check"></i>';
+        this.btnUpdateToLatest.style.color = '#89D185';
+        setTimeout(() => {
+            this.btnUpdateToLatest.innerHTML = originalIcon;
+            this.btnUpdateToLatest.style.color = '';
+        }, 2000);
+
+        console.log(`Node updated to library v${libraryDef.version}`);
+    }
+
+    /**
+     * Updates the sync status indicator based on current node state
+     */
+    private updateSyncStatusIndicator(): void {
+        if (!this.syncStatusIndicator || !this.currentNode) return;
+
+        // Only show for nodes with a library type
+        if (!this.currentNode.libraryType) {
+            this.syncStatusIndicator.classList.add('hidden');
+            return;
+        }
+
+        const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+        if (!CustomNodeCatalog) {
+            this.syncStatusIndicator.classList.add('hidden');
+            return;
+        }
+
+        const libraryDef = CustomNodeCatalog.getCustomNode(this.currentNode.libraryType);
+        if (!libraryDef) {
+            // Library definition doesn't exist (maybe deleted)
+            this.syncStatusIndicator.className = 'sync-status-indicator out-of-sync';
+            this.syncStatusIndicator.innerHTML = '<i class="fas fa-unlink"></i> Library definition not found';
+            this.syncStatusIndicator.title = 'The library definition for this node no longer exists';
+            this.syncStatusIndicator.classList.remove('hidden');
+            return;
+        }
+
+        // Check if out of sync
+        const isOutOfSync = this.currentNode.libraryVersion !== libraryDef.version;
+
+        if (this.currentNode.isModified) {
+            // Node is modified
+            this.syncStatusIndicator.className = 'sync-status-indicator out-of-sync';
+            this.syncStatusIndicator.innerHTML = '<i class="fas fa-edit"></i> Modified (not synced)';
+            this.syncStatusIndicator.title = 'This node has been modified and will not receive library updates';
+            this.syncStatusIndicator.classList.remove('hidden');
+        } else if (isOutOfSync) {
+            // Node is out of sync
+            this.syncStatusIndicator.className = 'sync-status-indicator out-of-sync';
+            this.syncStatusIndicator.innerHTML = `<i class="fas fa-exclamation-circle"></i> Out of sync (v${this.currentNode.libraryVersion} → v${libraryDef.version})`;
+            this.syncStatusIndicator.title = 'A newer version is available in the library';
+            this.syncStatusIndicator.classList.remove('hidden');
+        } else {
+            // Node is synced
+            this.syncStatusIndicator.className = 'sync-status-indicator synced';
+            this.syncStatusIndicator.innerHTML = `<i class="fas fa-check-circle"></i> Synced (v${libraryDef.version})`;
+            this.syncStatusIndicator.title = 'This node is synced with the library';
+            this.syncStatusIndicator.classList.remove('hidden');
         }
     }
 
@@ -306,10 +730,12 @@ export class CodeEditorPanel {
             }
 
             // Visual feedback
-            const originalText = this.btnSaveToCatalog.innerHTML;
-            this.btnSaveToCatalog.innerHTML = '<i class="fas fa-check"></i> Saved to Catalog';
+            const originalIcon = this.btnSaveToCatalog.innerHTML;
+            this.btnSaveToCatalog.innerHTML = '<i class="fas fa-check"></i>';
+            this.btnSaveToCatalog.style.color = '#89D185';
             setTimeout(() => {
-                this.btnSaveToCatalog.innerHTML = originalText;
+                this.btnSaveToCatalog.innerHTML = originalIcon;
+                this.btnSaveToCatalog.style.color = '';
             }, 2000);
 
         } catch (error) {
@@ -326,6 +752,11 @@ export class CodeEditorPanel {
      * Callback for when a custom node is saved to the catalog
      */
     public onCustomNodeSaved?: (customNodeDef: any) => void;
+
+    /**
+     * Callback for when a library definition is updated (to sync all instances)
+     */
+    public onLibraryDefinitionUpdated?: (libraryType: string, updatedDef: any) => void;
 
     /**
      * Shows the panel

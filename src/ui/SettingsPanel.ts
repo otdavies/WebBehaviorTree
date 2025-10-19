@@ -1,13 +1,13 @@
 import { EditorState } from '../state/EditorState.js';
-import { ToggleGridAction } from '../actions/EditorActions.js';
-import { CommandHistory } from '../core/Command.js';
+import { ToggleGridOperation } from '../actions/EditorActions.js';
+import { OperationHistory } from '../core/Operation.js';
 
 /**
  * SettingsPanel: Manages the settings sidebar
  */
 export class SettingsPanel {
     private editorState: EditorState;
-    private commandHistory: CommandHistory;
+    private commandHistory: OperationHistory;
     private panel: HTMLElement;
     private btnClose: HTMLButtonElement;
     private btnExport: HTMLButtonElement;
@@ -15,15 +15,13 @@ export class SettingsPanel {
     private btnClear: HTMLButtonElement;
     private fileInput: HTMLInputElement;
     private showGridCheckbox: HTMLInputElement;
-    private settingsTickRateSlider: HTMLInputElement;
-    private settingsTickRateValue: HTMLSpanElement;
     private blackboardInspector: HTMLElement;
 
     public onExport?: () => void;
     public onImport?: (data: any) => void;
     public onClear?: () => void;
 
-    constructor(editorState: EditorState, commandHistory: CommandHistory) {
+    constructor(editorState: EditorState, commandHistory: OperationHistory) {
         this.editorState = editorState;
         this.commandHistory = commandHistory;
 
@@ -35,14 +33,7 @@ export class SettingsPanel {
         this.btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
         this.fileInput = document.getElementById('file-input') as HTMLInputElement;
         this.showGridCheckbox = document.getElementById('show-grid') as HTMLInputElement;
-        this.settingsTickRateSlider = document.getElementById('settings-tick-rate') as HTMLInputElement;
-        this.settingsTickRateValue = document.getElementById('settings-tick-rate-value') as HTMLSpanElement;
         this.blackboardInspector = document.getElementById('blackboard-inspector')!;
-
-        // Initialize tick rate slider with current value
-        const currentTickRate = this.editorState.behaviorTree.getTickRate();
-        this.settingsTickRateSlider.value = currentTickRate.toString();
-        this.settingsTickRateValue.textContent = currentTickRate.toString();;
 
         this.setupEventListeners();
         this.updateBlackboard();
@@ -86,17 +77,11 @@ export class SettingsPanel {
         });
 
         this.showGridCheckbox.addEventListener('change', () => {
-            // Only execute action if the value actually changed
+            // Only execute operation if the value actually changed
             if (this.editorState.showGrid !== this.showGridCheckbox.checked) {
-                const action = new ToggleGridAction(this.editorState);
-                this.commandHistory.execute(action);
+                const operation = new ToggleGridOperation(this.editorState);
+                this.commandHistory.execute(operation);
             }
-        });
-
-        this.settingsTickRateSlider.addEventListener('input', () => {
-            const rate = parseInt(this.settingsTickRateSlider.value);
-            this.editorState.behaviorTree.setTickRate(rate);
-            this.settingsTickRateValue.textContent = rate.toString();
         });
     }
 

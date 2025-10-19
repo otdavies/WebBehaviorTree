@@ -13,16 +13,16 @@ export class ContextMenu {
     /**
      * Callback fired when a node type is selected from the menu.
      *
-     * Implementation should create the node using AddNodeAction and execute it
-     * through the CommandHistory for proper undo/redo support.
+     * Implementation should create the node using AddNodeOperation and execute it
+     * through the OperationHistory for proper undo/redo support.
      *
      * Example:
      * ```ts
      * contextMenu.onNodeTypeSelect = (type: string, worldPos: Vector2) => {
      *     const node = NodeRegistry.create(type);
      *     node.position = worldPos;
-     *     const action = new AddNodeAction(editorState, node);
-     *     commandHistory.execute(action);
+     *     const operation = new AddNodeOperation(editorState, node);
+     *     commandHistory.execute(operation);
      * };
      * ```
      */
