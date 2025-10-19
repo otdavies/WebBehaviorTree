@@ -5,7 +5,10 @@
       "Bash(npm test)",
       "Bash(npx tsc --noEmit)",
       "Bash(npx tsc)",
-      "Bash(npm test -- tests/state/EditorState.test.ts)"
+      "Bash(npm test -- tests/state/EditorState.test.ts)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor(core): rename Command pattern to Operation pattern\n\nRename Command interface and CommandHistory class to Operation and \nOperationHistory respectively for better semantic clarity. The term \n\"operation\" more accurately describes the undo/redo actions performed \non the editor state.\n\nChanges:\n- Rename Command.ts to Operation.ts\n- Update Command interface to Operation interface\n- Update CommandHistory class to OperationHistory class\n- Rename all Action classes (AddNodeAction -> AddNodeOperation, etc.)\n- Update all references throughout the codebase\n- Update documentation and comments to reflect new terminology\n\nThis is a pure refactoring with no functional changes - all behavior \nremains identical.\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git add *)"
     ],
     "deny": [],
     "ask": []
