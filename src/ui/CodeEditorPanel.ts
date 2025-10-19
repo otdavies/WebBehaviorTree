@@ -318,9 +318,17 @@ export class CodeEditorPanel {
 
     /**
      * Updates the deviation indicator based on current code vs default
+     * Note: Only shown for non-library nodes. Library nodes use sync status indicator instead.
      */
     private updateDeviationIndicator(): void {
         if (!this.deviationIndicator || !this.monacoEditor) return;
+
+        // Only show deviation indicator for non-library nodes
+        // Library nodes use the sync status indicator instead
+        if (this.currentNode && this.currentNode.libraryType) {
+            this.deviationIndicator.classList.add('hidden');
+            return;
+        }
 
         const currentCode = this.monacoEditor.getValue().trim();
         const hasDeviated = currentCode !== this.defaultCode.trim() && currentCode !== '';
@@ -341,9 +349,19 @@ export class CodeEditorPanel {
             const operation = new UpdateNodeCodeOperation(this.currentNode, newCode);
             this.commandHistory.execute(operation);
 
-            // Mark node as modified if it's from a library
-            if (this.currentNode.libraryType && !this.currentNode.isModified) {
-                this.currentNode.isModified = true;
+            // Mark node as modified ONLY if code differs from library definition
+            if (this.currentNode.libraryType) {
+                const CustomNodeCatalog = (window as any).CustomNodeCatalog;
+                const libraryDef = CustomNodeCatalog?.getCustomNode(this.currentNode.libraryType);
+
+                if (libraryDef) {
+                    // Compare trimmed code to avoid whitespace-only differences
+                    const codeMatches = newCode.trim() === libraryDef.code.trim();
+                    this.currentNode.isModified = !codeMatches;
+                } else {
+                    // Library definition doesn't exist, mark as modified
+                    this.currentNode.isModified = true;
+                }
             }
 
             // Trigger file save callback if provided

@@ -26,6 +26,7 @@ export class Canvas {
     private animationFrameId: number | null = null;
     private isRendering: boolean = false;
     private boundResizeHandler = () => this.resizeCanvas();
+    private lastFrameTime: number = 0;
 
     constructor(canvasElement: HTMLCanvasElement, editorState: EditorState) {
         this.canvas = canvasElement;
@@ -90,8 +91,15 @@ export class Canvas {
     /**
      * Main rendering loop
      */
-    private renderLoop = (): void => {
+    private renderLoop = (timestamp: number = 0): void => {
         if (!this.isRendering) return;
+
+        // Calculate delta time
+        const deltaTime = this.lastFrameTime ? (timestamp - this.lastFrameTime) / 1000 : 0;
+        this.lastFrameTime = timestamp;
+
+        // Update animations
+        this.connectionRenderer.updateAnimation(deltaTime);
 
         this.render();
         this.animationFrameId = requestAnimationFrame(this.renderLoop);

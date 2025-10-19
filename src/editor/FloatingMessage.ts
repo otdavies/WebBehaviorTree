@@ -18,7 +18,7 @@ export class FloatingMessage {
         this.color = color;
         this.lifetime = lifetime;
         this.maxLifetime = lifetime;
-        this.velocity = new Vector2(0, -30); // Float upwards
+        this.velocity = new Vector2(0, -50); // Float upwards
     }
 
     /**
