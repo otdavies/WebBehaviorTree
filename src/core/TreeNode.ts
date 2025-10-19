@@ -56,6 +56,13 @@ export abstract class TreeNode {
     // Maximum number of children allowed (-1 for unlimited)
     public maxChildren: number = -1;
 
+    // Port configuration
+    // Number of input ports (typically 0 for root nodes like Start, 1 for all others)
+    public numInputs: number = 1;
+
+    // Number of output ports (-1 for dynamic based on children, 0 for leaf nodes)
+    public numOutputs: number = -1;
+
     constructor(type: string, label: string, category: NodeCategory, icon: string, color: string) {
         this.id = this.generateId();
         this.type = type;

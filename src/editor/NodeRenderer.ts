@@ -88,7 +88,10 @@ export class NodeRenderer {
         this.drawStatusIndicator(ctx, node, pos, node.status);
 
         // Draw ports
-        this.drawInputPort(ctx, node, pos);
+        // Only draw input port if the node defines input ports
+        if (node.numInputs > 0) {
+            this.drawInputPort(ctx, node, pos);
+        }
 
         if (node.category === 'composite' || node.category === 'decorator') {
             // Show existing child ports + an "add" port (only if we can add more children)
@@ -503,10 +506,12 @@ export class NodeRenderer {
      * Finds which port (if any) is at a given point
      */
     public getPortAtPoint(node: TreeNode, point: Vector2): { type: 'input' | 'output'; index: number; isAddPort?: boolean } | null {
-        // Check input port
-        const inputPos = this.getInputPortPosition(node, node.position);
-        if (inputPos.distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
-            return { type: 'input', index: 0 };
+        // Check input port (only if node has input ports)
+        if (node.numInputs > 0) {
+            const inputPos = this.getInputPortPosition(node, node.position);
+            if (inputPos.distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
+                return { type: 'input', index: 0 };
+            }
         }
 
         // Check output ports
