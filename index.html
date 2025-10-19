@@ -40,17 +40,15 @@
                 <button id="btn-reset" class="toolbar-btn" title="Reset (R)">
                     <i class="fas fa-undo"></i>
                 </button>
-
-                <div class="toolbar-separator"></div>
-
-                <label class="tick-rate-label">
-                    Tick Rate:
-                    <input type="range" id="tick-rate-slider" min="1" max="60" value="10">
-                    <span id="tick-rate-value">10</span> ticks/s
-                </label>
             </div>
 
             <div class="toolbar-section">
+                <div class="toolbar-tick-rate" title="Tick rate (ticks per second)">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <input type="number" id="toolbar-tick-rate" min="1" max="60" value="10" class="tick-rate-input">
+                    <span class="tick-rate-unit">tps</span>
+                </div>
+                <div class="toolbar-separator"></div>
                 <button id="btn-settings" class="toolbar-btn" title="Settings">
                     <i class="fas fa-cog"></i>
                 </button>
@@ -75,7 +73,7 @@
             <!-- Settings Panel (Initially Hidden) -->
             <div id="settings-panel" class="panel panel-right hidden">
                 <div class="panel-header">
-                    <h2>Settings</h2>
+                    <h2><i class="fas fa-cog"></i> Settings</h2>
                     <button id="btn-close-settings" class="btn-close">
                         <i class="fas fa-times"></i>
                     </button>
@@ -84,44 +82,35 @@
                 <div class="panel-content">
                     <section class="settings-section">
                         <h3>File</h3>
-                        <button id="btn-export" class="settings-btn">
-                            <i class="fas fa-download"></i> Export JSON
-                        </button>
-                        <button id="btn-import" class="settings-btn">
-                            <i class="fas fa-upload"></i> Import JSON
-                        </button>
-                        <input type="file" id="file-input" accept=".json" style="display: none;">
-                        <button id="btn-clear" class="settings-btn settings-btn-danger">
-                            <i class="fas fa-trash"></i> Clear Tree
-                        </button>
+                        <div class="settings-actions">
+                            <button id="btn-export" class="settings-action-btn" title="Export tree as JSON">
+                                <i class="fas fa-download"></i>
+                                <span>Export JSON</span>
+                            </button>
+                            <button id="btn-import" class="settings-action-btn" title="Import tree from JSON">
+                                <i class="fas fa-upload"></i>
+                                <span>Import JSON</span>
+                            </button>
+                            <input type="file" id="file-input" accept=".json" style="display: none;">
+                            <button id="btn-clear" class="settings-action-btn settings-action-btn-danger" title="Clear entire tree">
+                                <i class="fas fa-trash"></i>
+                                <span>Clear Tree</span>
+                            </button>
+                        </div>
                     </section>
 
                     <section class="settings-section">
-                        <h3>Execution</h3>
-                        <label class="settings-label">
-                            Tick Rate: <span id="settings-tick-rate-value">10</span> ticks/s
-                            <input type="range" id="settings-tick-rate" min="1" max="60" value="10" style="width: 100%; margin-top: 8px;">
-                        </label>
-                    </section>
-
-                    <section class="settings-section">
-                        <h3>Visual</h3>
-                        <label class="settings-checkbox">
+                        <h3>View</h3>
+                        <label class="settings-checkbox-item">
                             <input type="checkbox" id="show-grid" checked>
-                            Show Grid
+                            <span>Show Grid</span>
                         </label>
-                        <!-- Snap to grid disabled for now - it's broken
-                        <label class="settings-checkbox">
-                            <input type="checkbox" id="snap-to-grid">
-                            Snap to Grid
-                        </label>
-                        -->
                     </section>
 
                     <section class="settings-section">
                         <h3>Blackboard</h3>
                         <div id="blackboard-inspector" class="blackboard-inspector">
-                            <em>No data</em>
+                            <em style="color: #858585;">No data</em>
                         </div>
                     </section>
                 </div>
@@ -132,22 +121,45 @@
                 <div class="panel-header">
                     <h2>
                         <i class="fas fa-code"></i>
-                        Edit Node Code
+                        Code Editor
+                        <span class="header-separator">-</span>
+                        <span id="editor-node-label" class="editor-node-badge">-</span>
                     </h2>
-                    <div class="panel-header-actions">
-                        <!-- Buttons added dynamically by CodeEditorPanel.ts -->
-                    </div>
                     <button id="btn-close-editor" class="btn-close">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
 
                 <div class="panel-content">
-                    <div class="editor-info">
-                        <strong>Node:</strong> <span id="editor-node-label">-</span>
+                    <div class="editor-toolbar">
+                        <!-- Status indicators and buttons added dynamically by CodeEditorPanel.ts -->
                     </div>
 
                     <div id="monaco-editor-container" style="height: 100%; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar (Bottom) -->
+        <div id="status-bar" class="status-bar state-idle">
+            <div class="status-bar-section">
+                <div class="status-item" id="status-execution" title="Execution state">
+                    <i class="fas fa-circle"></i>
+                    <span class="status-item-value" id="status-execution-text">Idle</span>
+                </div>
+                <div class="status-item" id="status-tick-count" title="Total ticks executed">
+                    <i class="fas fa-hashtag"></i>
+                    Tick: <span class="status-item-value" id="status-tick-count-value">0</span>
+                </div>
+                <div class="status-item" id="status-tick-rate" title="Click to adjust tick rate">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="status-item-value" id="status-tick-rate-value">10</span> ticks/s
+                </div>
+            </div>
+            <div class="status-bar-section">
+                <div class="status-item" id="status-nodes" title="Total nodes in tree">
+                    <i class="fas fa-project-diagram"></i>
+                    Nodes: <span class="status-item-value" id="status-nodes-value">0</span>
                 </div>
             </div>
         </div>

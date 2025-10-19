@@ -1,27 +1,28 @@
 /* ========================================
-   Toolbar
+   Toolbar - VS Code Style
    ======================================== */
 
 #toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-color);
-    padding: var(--spacing-sm) var(--spacing-md);
-    height: 56px;
+    background-color: #1E1E1E;
+    border-bottom: 1px solid #2D2D2D;
+    padding: 0 12px;
+    height: 48px;
     flex-shrink: 0;
 }
 
 .toolbar-section {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    gap: 8px;
 }
 
 .toolbar-controls {
     flex: 1;
     justify-content: center;
+    gap: 4px;
 }
 
 /* ========================================
@@ -29,76 +30,70 @@
    ======================================== */
 
 .app-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 400;
+    color: #CCCCCC;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 8px;
+    letter-spacing: 0.02em;
+    margin-right: 16px;
 }
 
 .app-title i {
-    color: var(--btn-primary);
-    font-size: 20px;
+    color: #858585;
+    font-size: 14px;
 }
 
 /* ========================================
-   Toolbar Buttons
+   Toolbar Buttons - VS Code Style (Icon Only)
    ======================================== */
 
 .toolbar-btn {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    width: 36px;
-    height: 36px;
-    border-radius: 4px;
+    background-color: transparent;
+    color: #CCCCCC;
+    width: 28px;
+    height: 28px;
+    border-radius: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    border: 1px solid var(--border-color);
-    transition: all 0.2s ease;
+    font-size: 14px;
+    border: none;
+    transition: all 0.08s ease;
+    cursor: pointer;
+    padding: 0;
 }
 
 .toolbar-btn:hover:not(:disabled) {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color-light);
-    color: var(--btn-primary);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
 }
 
 .toolbar-btn:active:not(:disabled) {
-    transform: scale(0.95);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 .toolbar-btn.active {
-    background-color: var(--btn-primary);
-    border-color: var(--btn-primary);
-    color: white;
+    background-color: rgba(55, 148, 255, 0.15);
+    color: #3794FF;
 }
 
-/* Play button special styling */
-#btn-play:not(:disabled):hover {
-    color: var(--status-success);
-}
-
+/* Play button active state */
 #btn-play.active {
-    background-color: var(--status-success);
-    border-color: var(--status-success);
+    background-color: rgba(73, 190, 133, 0.15);
+    color: #49BE85;
 }
 
-/* Pause button special styling */
-#btn-pause:not(:disabled):hover {
-    color: var(--status-running);
-}
-
+/* Pause button active state */
 #btn-pause.active {
-    background-color: var(--status-running);
-    border-color: var(--status-running);
-}
-
-/* Reset button special styling */
-#btn-reset:not(:disabled):hover {
-    color: var(--btn-danger);
+    background-color: rgba(241, 196, 15, 0.15);
+    color: #F1C40F;
 }
 
 /* ========================================
@@ -107,32 +102,118 @@
 
 .toolbar-separator {
     width: 1px;
-    height: 24px;
-    background-color: var(--border-color);
-    margin: 0 var(--spacing-sm);
+    height: 20px;
+    background-color: #3C3C3C;
+    margin: 0 8px;
+    flex-shrink: 0;
 }
 
 /* ========================================
-   Tick Rate Control
+   Tick Rate Control (Toolbar)
    ======================================== */
 
-.tick-rate-label {
+.toolbar-tick-rate {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    font-size: 13px;
-    color: var(--text-secondary);
+    gap: 6px;
+    padding: 0 8px;
+    height: 28px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 3px;
+    border: 1px solid #3C3C3C;
+}
+
+.toolbar-tick-rate i {
+    font-size: 11px;
+    color: #858585;
+}
+
+.tick-rate-input {
+    width: 36px;
+    background-color: transparent;
+    border: none;
+    color: #CCCCCC;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    text-align: center;
+    outline: none;
+    padding: 0;
+    -moz-appearance: textfield;
+}
+
+.tick-rate-input::-webkit-inner-spin-button,
+.tick-rate-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.tick-rate-input:focus {
+    color: #FFFFFF;
+}
+
+.tick-rate-unit {
+    font-size: 11px;
+    color: #858585;
+    user-select: none;
+}
+
+/* ========================================
+   Status Bar (Bottom) - VS Code Style
+   ======================================== */
+
+#status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #007ACC;
+    color: #FFFFFF;
+    padding: 0 12px;
+    height: 24px;
+    font-size: 11px;
+    flex-shrink: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.status-bar-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
     white-space: nowrap;
 }
 
-#tick-rate-slider {
-    width: 100px;
+.status-item i {
+    font-size: 10px;
+    opacity: 0.9;
 }
 
-#tick-rate-value {
-    display: inline-block;
-    min-width: 20px;
-    text-align: right;
-    color: var(--text-primary);
-    font-weight: 600;
+.status-item:hover {
+    opacity: 0.9;
+}
+
+.status-item-value {
+    font-weight: 500;
+}
+
+/* Execution state colors */
+.status-bar.state-running {
+    background-color: #49BE85;
+}
+
+.status-bar.state-paused {
+    background-color: #F1C40F;
+}
+
+.status-bar.state-idle {
+    background-color: #007ACC;
+}
+
+.status-bar.state-error {
+    background-color: #F44747;
 }
