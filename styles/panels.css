@@ -45,19 +45,28 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-tertiary);
+    padding: 10px 16px;
+    border-bottom: 1px solid #2D2D2D;
+    background-color: #1E1E1E;
     gap: var(--spacing-sm);
+    height: 48px;
 }
 
 .panel-header h2 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 400;
+    color: #CCCCCC;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    letter-spacing: 0.02em;
+}
+
+.panel-header h2 i {
+    font-size: 14px;
+    color: #858585;
 }
 
 .panel-header-actions {
@@ -67,12 +76,14 @@
     flex: 1;
     justify-content: flex-end;
     margin-right: var(--spacing-sm);
+    flex-wrap: wrap;
 }
 
 .panel-header-actions button {
-    font-size: 12px;
-    padding: 6px 12px;
+    font-size: 11px;
+    padding: 5px 10px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* ========================================
@@ -86,68 +97,167 @@
 }
 
 /* ========================================
-   Settings Panel Specific
+   Settings Panel Specific - VS Code Style
    ======================================== */
 
 .settings-section {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 24px;
 }
 
 .settings-section h3 {
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: #858585;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: var(--spacing-md);
+    letter-spacing: 0.8px;
+    margin-bottom: 12px;
 }
 
-.settings-btn {
+/* Settings Actions (Buttons) */
+.settings-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.settings-action-btn {
     width: 100%;
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 4px;
-    font-size: 14px;
+    background-color: transparent;
+    color: #CCCCCC;
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-size: 13px;
     text-align: left;
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-    border: 1px solid var(--border-color);
+    gap: 10px;
+    border: 1px solid #3C3C3C;
+    transition: all 0.08s ease;
+    cursor: pointer;
 }
 
-.settings-btn:hover {
-    background-color: var(--bg-primary);
-    border-color: var(--border-color-light);
+.settings-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: #4C4C4C;
+    color: #FFFFFF;
 }
 
-.settings-btn i {
-    width: 16px;
+.settings-action-btn:active {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.settings-action-btn i {
+    width: 14px;
     text-align: center;
+    font-size: 12px;
+    color: #858585;
 }
 
-.settings-btn-danger {
-    color: var(--btn-danger);
+.settings-action-btn:hover i {
+    color: #CCCCCC;
 }
 
-.settings-btn-danger:hover {
-    background-color: rgba(231, 76, 60, 0.1);
-    border-color: var(--btn-danger);
+.settings-action-btn-danger {
+    color: #F48771;
+    border-color: rgba(244, 71, 71, 0.3);
 }
 
-.settings-checkbox {
+.settings-action-btn-danger:hover {
+    background-color: rgba(244, 71, 71, 0.1);
+    border-color: #F48771;
+}
+
+.settings-action-btn-danger i {
+    color: #F48771;
+}
+
+/* Settings Properties */
+.settings-property {
+    margin-bottom: 16px;
+}
+
+.settings-property-label {
+    display: block;
+    font-size: 12px;
+    color: #CCCCCC;
+    margin-bottom: 8px;
+    font-weight: 400;
+}
+
+.settings-property-control {
     display: flex;
     align-items: center;
-    color: var(--text-primary);
-    font-size: 14px;
-    margin-bottom: var(--spacing-sm);
-    cursor: pointer;
-    user-select: none;
+    gap: 8px;
 }
 
-.settings-checkbox:hover {
-    color: var(--text-primary);
+.settings-slider {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    background: linear-gradient(to bottom, #2D2D2D, #404040);
+    border: 1px solid #2D2D2D;
+}
+
+.settings-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #007ACC;
+    cursor: pointer;
+    transition: all 0.08s ease;
+}
+
+.settings-slider::-webkit-slider-thumb:hover {
+    background: #1177BB;
+    transform: scale(1.1);
+}
+
+.settings-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #007ACC;
+    cursor: pointer;
+    border: none;
+    transition: all 0.08s ease;
+}
+
+.settings-slider::-moz-range-thumb:hover {
+    background: #1177BB;
+    transform: scale(1.1);
+}
+
+.settings-property-value {
+    font-size: 12px;
+    color: #CCCCCC;
+    min-width: 60px;
+}
+
+/* Checkbox Items */
+.settings-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #CCCCCC;
+    font-size: 13px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+}
+
+.settings-checkbox-item:hover {
+    color: #FFFFFF;
+}
+
+.settings-checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 /* Blackboard Inspector */
@@ -186,23 +296,59 @@
    Code Editor Panel Specific
    ======================================== */
 
-.editor-info {
-    background-color: var(--bg-primary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 4px;
-    margin-bottom: var(--spacing-md);
-    font-size: 14px;
-    color: var(--text-secondary);
+/* Node badge in header - styled with node type color */
+.editor-node-badge {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+    color: #CCCCCC;
+    background-color: rgba(255, 255, 255, 0.05);
+    margin-left: 0;
+    letter-spacing: 0.02em;
 }
 
-.editor-info strong {
-    color: var(--text-primary);
+.header-separator {
+    color: #858585;
+    font-weight: 300;
+    margin: 0 4px;
+    font-size: 12px;
+}
+
+/* Editor toolbar - buttons in single row above editor */
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background-color: #252526;
+    border-bottom: 1px solid #2D2D2D;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    min-height: 40px;
+}
+
+/* Hide scrollbar but keep functionality */
+.editor-toolbar::-webkit-scrollbar {
+    height: 0px;
+}
+
+.editor-toolbar::-webkit-scrollbar-thumb {
+    background: transparent;
 }
 
 #monaco-editor-container {
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border: none;
     overflow: hidden;
+    flex: 1;
+}
+
+/* Adjust panel content to fill height properly */
+#code-editor-panel .panel-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .editor-actions {
@@ -240,26 +386,136 @@
     opacity: 0.5;
 }
 
-/* Deviation Indicator */
+/* Deviation Indicator - VS Code style */
 .deviation-indicator {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background-color: rgba(241, 196, 15, 0.15);
-    border: 1px solid rgba(241, 196, 15, 0.4);
-    border-radius: 4px;
-    color: #F1C40F;
-    font-size: 12px;
-    font-weight: 600;
+    gap: 5px;
+    padding: 4px 8px;
+    background-color: rgba(203, 145, 47, 0.15);
+    border: 1px solid rgba(203, 145, 47, 0.35);
+    border-radius: 2px;
+    color: #D4A44A;
+    font-size: 11px;
+    font-weight: 400;
+    flex-shrink: 0;
 }
 
 .deviation-indicator i {
-    font-size: 12px;
+    font-size: 10px;
 }
 
 .deviation-indicator.hidden {
     display: none;
+}
+
+/* Library Sync Status Indicator - VS Code style */
+.sync-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 400;
+    flex-shrink: 0;
+    max-width: fit-content;
+}
+
+.sync-status-indicator.out-of-sync {
+    background-color: rgba(244, 71, 71, 0.15);
+    border: 1px solid rgba(244, 71, 71, 0.35);
+    color: #F48771;
+}
+
+.sync-status-indicator.synced {
+    background-color: rgba(73, 190, 133, 0.15);
+    border: 1px solid rgba(73, 190, 133, 0.35);
+    color: #89D185;
+}
+
+.sync-status-indicator i {
+    font-size: 10px;
+}
+
+.sync-status-indicator.hidden {
+    display: none;
+}
+
+/* Editor Button Styling - VS Code style (icon-only) */
+.btn-editor {
+    background-color: transparent;
+    color: #CCCCCC;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.08s ease;
+    font-size: 14px;
+    padding: 0;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.btn-editor:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+}
+
+.btn-editor:active {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-editor.btn-icon {
+    /* Icon-only button style */
+}
+
+.btn-editor i {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Toolbar separator for visual grouping */
+.toolbar-separator {
+    width: 1px;
+    height: 20px;
+    background-color: #3C3C3C;
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Close Button in Panel Header */
+#btn-close-editor,
+.panel-header button {
+    background-color: transparent;
+    color: #858585;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.08s ease;
+    font-size: 16px;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+#btn-close-editor:hover,
+.panel-header button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #CCCCCC;
+}
+
+#btn-close-editor:active,
+.panel-header button:active {
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* ========================================
