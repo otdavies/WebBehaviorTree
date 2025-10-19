@@ -15,6 +15,7 @@ export class StartNode extends TreeNode {
     constructor() {
         super('start', 'Start', 'decorator', 'fa-play', Theme.status.success);
         this.maxChildren = 1; // Start node can only have one child (the root of the tree)
+        this.numInputs = 0; // Start nodes have no inputs (they are the root of execution)
     }
 
     public tick(blackboard: Blackboard): NodeStatus {
