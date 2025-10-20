@@ -217,3 +217,35 @@
 .status-bar.state-error {
     background-color: #F44747;
 }
+
+/* ========================================
+   Status Bar Chat Button
+   ======================================== */
+
+.status-item-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0 8px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.2s ease;
+}
+
+.status-item-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 1);
+}
+
+.status-item-btn i {
+    font-size: 11px;
+}
+
+/* Active state when chat is open */
+.status-item-btn.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 1);
+}

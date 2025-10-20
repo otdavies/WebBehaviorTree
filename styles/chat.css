@@ -459,38 +459,6 @@
 }
 
 /* ========================================
-   Status Bar Chat Button
-   ======================================== */
-
-.status-item-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0 12px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #888;
-    transition: all 0.2s ease;
-}
-
-.status-item-btn:hover {
-    background: rgba(74, 144, 226, 0.1);
-    color: #4A90E2;
-}
-
-.status-item-btn i {
-    font-size: 14px;
-}
-
-/* Active state when chat is open */
-.status-item-btn.active {
-    background: rgba(74, 144, 226, 0.15);
-    color: #4A90E2;
-}
-
-/* ========================================
    Responsive Design
    ======================================== */
 
