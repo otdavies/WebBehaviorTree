@@ -3,10 +3,10 @@ import { ChatMessage, ChatState, ToolCall, MessageRole } from '../ai/MessageType
 /**
  * ChatPanel: Manages the AI chat interface
  *
- * Provides a collapsible chat panel at the bottom of the screen for AI interaction.
+ * Provides a floating chat widget triggered from the status bar.
  * Features:
- * - Collapsed state: Slim bar with prompt text
- * - Expanded state: Full chat interface with message history
+ * - Minimal trigger: Sparkles icon in status bar
+ * - Floating window: Appears bottom-right when opened
  * - Message display: User, assistant, and system messages
  * - Thinking indicator: Shows when AI is thinking
  * - Tool call display: Shows operations being executed
@@ -15,7 +15,7 @@ import { ChatMessage, ChatState, ToolCall, MessageRole } from '../ai/MessageType
 export class ChatPanel {
     // DOM elements
     private panel: HTMLElement;
-    private chatBar: HTMLElement;
+    private toggleButton: HTMLButtonElement;
     private messagesContainer: HTMLElement;
     private inputArea: HTMLTextAreaElement;
     private sendButton: HTMLButtonElement;
@@ -36,7 +36,7 @@ export class ChatPanel {
     constructor() {
         // Get DOM elements
         this.panel = document.getElementById('chat-panel')!;
-        this.chatBar = this.panel.querySelector('.chat-bar')!;
+        this.toggleButton = document.getElementById('chat-toggle-btn') as HTMLButtonElement;
         this.messagesContainer = this.panel.querySelector('.chat-messages')!;
         this.inputArea = this.panel.querySelector('.chat-input-area textarea')!;
         this.sendButton = this.panel.querySelector('.chat-send-btn')!;
@@ -49,9 +49,9 @@ export class ChatPanel {
      * Sets up all event listeners
      */
     private setupEventListeners(): void {
-        // Click on chat bar to expand
-        this.chatBar.addEventListener('click', () => {
-            this.expand();
+        // Toggle button click
+        this.toggleButton.addEventListener('click', () => {
+            this.toggle();
         });
 
         // Close button click
@@ -84,17 +84,6 @@ export class ChatPanel {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
                 this.toggle();
-            }
-        });
-
-        // Click away to close
-        document.addEventListener('click', (e) => {
-            if (this.isExpanded) {
-                const target = e.target as Node;
-                // Close if click is outside the panel
-                if (!this.panel.contains(target)) {
-                    this.collapse();
-                }
             }
         });
 
@@ -160,6 +149,7 @@ export class ChatPanel {
         this.isExpanded = true;
         this.panel.classList.remove('collapsed');
         this.panel.classList.add('expanded');
+        this.toggleButton.classList.add('active');
 
         // Focus the input
         setTimeout(() => {
@@ -178,6 +168,7 @@ export class ChatPanel {
         this.isExpanded = false;
         this.panel.classList.remove('expanded');
         this.panel.classList.add('collapsed');
+        this.toggleButton.classList.remove('active');
     }
 
     /**

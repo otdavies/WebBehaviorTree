@@ -1,5 +1,5 @@
 /* ========================================
-   Chat Panel Styles - Floating Widget Design
+   Chat Panel Styles - Minimal Floating Widget
    ======================================== */
 
 #chat-panel {
@@ -9,122 +9,26 @@
     width: 450px;
     max-width: calc(100vw - 60px);
     z-index: 1000;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
 }
 
-/* ========================================
-   Collapsed State - Shimmer Bar
-   ======================================== */
-
+/* When collapsed, hide the entire panel */
 #chat-panel.collapsed {
-    bottom: 0;
-    right: 0;
-    left: 0;
-    width: 100%;
-    max-width: 100%;
-}
-
-#chat-panel.collapsed .chat-container {
     display: none;
 }
 
-#chat-panel.collapsed .chat-bar {
-    display: flex;
-}
-
-/* ========================================
-   Expanded State - Floating Window
-   ======================================== */
-
+/* When expanded, show the container */
 #chat-panel.expanded {
-    bottom: 20px;
-    right: 30px;
-    width: 450px;
-    max-width: calc(100vw - 60px);
-}
-
-#chat-panel.expanded .chat-container {
-    display: flex;
-    opacity: 1;
-}
-
-#chat-panel.expanded .chat-bar {
-    display: none;
+    display: block;
+    pointer-events: auto;
 }
 
 /* ========================================
-   Chat Bar (Collapsed State)
-   ======================================== */
-
-.chat-bar {
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    background: linear-gradient(90deg,
-        rgba(74, 144, 226, 0.1) 0%,
-        rgba(155, 89, 182, 0.15) 50%,
-        rgba(74, 144, 226, 0.1) 100%);
-    border-top: 1px solid rgba(74, 144, 226, 0.3);
-    color: #aaa;
-    font-size: 13px;
-    font-weight: 500;
-    user-select: none;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Shimmer effect */
-.chat-bar::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg,
-        transparent,
-        rgba(255, 255, 255, 0.1),
-        transparent);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0% {
-        left: -100%;
-    }
-    100% {
-        left: 100%;
-    }
-}
-
-.chat-bar:hover {
-    background: linear-gradient(90deg,
-        rgba(74, 144, 226, 0.15) 0%,
-        rgba(155, 89, 182, 0.2) 50%,
-        rgba(74, 144, 226, 0.15) 100%);
-    border-top-color: rgba(74, 144, 226, 0.5);
-    color: #ddd;
-}
-
-.chat-bar span {
-    position: relative;
-    z-index: 1;
-}
-
-.chat-bar span::before {
-    content: '✨ ';
-    margin-right: 4px;
-}
-
-/* ========================================
-   Chat Container (Expanded State)
+   Chat Container (Floating Window)
    ======================================== */
 
 .chat-container {
-    display: none;
+    display: flex;
     flex-direction: column;
     height: 550px;
     background: rgba(24, 24, 27, 0.98);
@@ -135,11 +39,6 @@
         0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     animation: floatIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
-    opacity: 0;
-}
-
-#chat-panel.expanded .chat-container {
-    opacity: 1;
 }
 
 @keyframes floatIn {
@@ -153,37 +52,26 @@
     }
 }
 
-/* Chat header */
+/* ========================================
+   Chat Header - Minimal
+   ======================================== */
+
 .chat-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
+    justify-content: flex-end;
+    padding: 12px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: linear-gradient(135deg, rgba(74, 144, 226, 0.1) 0%, rgba(155, 89, 182, 0.1) 100%);
-}
-
-.chat-header-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.chat-header-title i {
-    font-size: 16px;
-    color: #9B59B6;
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .chat-close-btn {
     background: transparent;
     border: none;
-    color: #888;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    color: #666;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -193,11 +81,11 @@
 
 .chat-close-btn:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    color: #aaa;
 }
 
 .chat-close-btn i {
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* ========================================
@@ -571,11 +459,43 @@
 }
 
 /* ========================================
+   Status Bar Chat Button
+   ======================================== */
+
+.status-item-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #888;
+    transition: all 0.2s ease;
+}
+
+.status-item-btn:hover {
+    background: rgba(74, 144, 226, 0.1);
+    color: #4A90E2;
+}
+
+.status-item-btn i {
+    font-size: 14px;
+}
+
+/* Active state when chat is open */
+.status-item-btn.active {
+    background: rgba(74, 144, 226, 0.15);
+    color: #4A90E2;
+}
+
+/* ========================================
    Responsive Design
    ======================================== */
 
 @media (max-width: 768px) {
-    #chat-panel.expanded {
+    #chat-panel {
         bottom: 10px;
         right: 10px;
         left: 10px;
@@ -598,9 +518,9 @@
    Accessibility
    ======================================== */
 
-.chat-bar:focus-visible,
 .chat-send-btn:focus-visible,
-.chat-close-btn:focus-visible {
+.chat-close-btn:focus-visible,
+.status-item-btn:focus-visible {
     outline: 2px solid #4A90E2;
     outline-offset: 2px;
 }
@@ -609,8 +529,7 @@
 @media (prefers-reduced-motion: reduce) {
     #chat-panel,
     .chat-message,
-    .thinking-dots span,
-    .chat-bar::before {
+    .thinking-dots span {
         animation: none !important;
         transition: none !important;
     }
