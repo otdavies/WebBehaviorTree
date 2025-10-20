@@ -1,6 +1,6 @@
 import { TreeNode } from '../core/TreeNode.js';
 import { EditorState } from '../state/EditorState.js';
-import { UpdateNodeCodeOperation } from '../actions/EditorActions.js';
+import { UpdateNodeCodeOperation } from '../operations/Operations.js';
 import { OperationHistory } from '../core/Operation.js';
 import { NodeExecutor } from '../core/NodeExecutor.js';
 import { CustomNodeCatalog } from '../utils/CustomNodeCatalog.js';
@@ -780,5 +780,13 @@ export class CodeEditorPanel {
             this.editorState.isPanelOpen = null;
         }
         this.currentNode = null;
+    }
+
+    /**
+     * Gets the currently open node in the code editor
+     * @returns The node being edited, or null if no node is open
+     */
+    public getCurrentNode(): TreeNode | null {
+        return this.currentNode;
     }
 }

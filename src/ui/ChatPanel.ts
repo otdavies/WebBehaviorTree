@@ -100,25 +100,23 @@ export class ChatPanel {
         const text = this.inputArea.value.trim();
         if (!text) return;
 
+        // Prevent sending while responding
+        if (this.chatState.isResponding) return;
+
         // Add user message to chat
         this.addUserMessage(text);
 
-        // Clear input
+        // Clear input immediately for better UX
         this.inputArea.value = '';
         this.autoResizeTextarea();
+
+        // Disable send button while processing
+        this.setResponding(true);
 
         // Call callback if provided
         if (this.onSendMessage) {
             this.onSendMessage(text);
         }
-
-        // For now, add a placeholder response
-        // (This will be replaced with actual AI integration in Step 2)
-        setTimeout(() => {
-            this.addAssistantMessage(
-                'AI integration coming in Step 2! For now, this is a placeholder response.'
-            );
-        }, 500);
     }
 
     /**
@@ -188,6 +186,46 @@ export class ChatPanel {
     }
 
     /**
+     * Updates a tool call status in real-time
+     */
+    public updateToolCallStatus(toolCallId: string, status: string, result?: any, error?: string): void {
+        // Find the message containing this tool call
+        for (const message of this.chatState.messages) {
+            if (message.toolCalls) {
+                const toolCall = message.toolCalls.find(tc => tc.id === toolCallId);
+                if (toolCall) {
+                    toolCall.status = status as any;
+                    if (result !== undefined) {
+                        toolCall.result = result;
+                    }
+                    if (error) {
+                        toolCall.error = error;
+                    }
+                    toolCall.completedAt = new Date();
+
+                    // Re-render the message to show updated status
+                    const messageElement = document.getElementById(`message-${message.id}`);
+                    if (messageElement) {
+                        const toolCallElement = messageElement.querySelector(`.tool-call[data-id="${toolCallId}"]`);
+                        if (toolCallElement) {
+                            const statusIcon = this.getToolCallStatusIcon(status);
+                            const headerElement = toolCallElement.querySelector('.tool-call-header');
+                            if (headerElement) {
+                                headerElement.innerHTML = `
+                                    <i class="${statusIcon}"></i>
+                                    <span class="tool-call-name">${toolCall.name}</span>
+                                    <span class="tool-call-status">${status}</span>
+                                `;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
      * Adds an assistant message to the chat
      */
     public addAssistantMessage(
@@ -230,6 +268,7 @@ export class ChatPanel {
      */
     public showThinking(): void {
         this.chatState.isThinking = true;
+        this.setResponding(true);
 
         // Add thinking indicator to messages
         const thinkingDiv = document.createElement('div');
@@ -259,10 +298,28 @@ export class ChatPanel {
      */
     public hideThinking(): void {
         this.chatState.isThinking = false;
+        this.setResponding(false);
 
         const thinkingIndicator = document.getElementById('thinking-indicator');
         if (thinkingIndicator) {
             thinkingIndicator.remove();
+        }
+    }
+
+    /**
+     * Sets responding state (enables/disables input controls)
+     */
+    private setResponding(isResponding: boolean): void {
+        this.chatState.isResponding = isResponding;
+        this.sendButton.disabled = isResponding;
+        this.inputArea.disabled = isResponding;
+
+        if (isResponding) {
+            this.sendButton.classList.add('disabled');
+            this.inputArea.classList.add('disabled');
+        } else {
+            this.sendButton.classList.remove('disabled');
+            this.inputArea.classList.remove('disabled');
         }
     }
 
@@ -331,6 +388,7 @@ export class ChatPanel {
     private renderToolCall(toolCall: ToolCall): HTMLElement {
         const div = document.createElement('div');
         div.className = `tool-call ${toolCall.status}`;
+        div.setAttribute('data-id', toolCall.id);
 
         const statusIcon = this.getToolCallStatusIcon(toolCall.status);
 

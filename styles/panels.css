@@ -260,6 +260,88 @@
     cursor: pointer;
 }
 
+/* AI Assistant Section */
+.api-key-input-group {
+    margin-bottom: 12px;
+}
+
+.settings-help-text {
+    font-size: 11px;
+    color: #858585;
+    margin-top: 6px;
+    margin-bottom: 0;
+    line-height: 1.4;
+}
+
+.api-key-input {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: #252526;
+    color: #CCCCCC;
+    border: 1px solid #3C3C3C;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.api-key-input:focus {
+    border-color: #007ACC;
+}
+
+.api-key-input::placeholder {
+    color: #656565;
+    font-style: italic;
+}
+
+.api-key-status {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid;
+    transition: all 0.2s ease;
+}
+
+.api-key-status i {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.api-key-status span {
+    flex: 1;
+    word-break: break-all;
+}
+
+.api-key-status.status-valid {
+    background-color: rgba(73, 190, 133, 0.1);
+    border-color: rgba(73, 190, 133, 0.3);
+    color: #89D185;
+}
+
+.api-key-status.status-error,
+.api-key-status.status-invalid {
+    background-color: rgba(244, 71, 71, 0.1);
+    border-color: rgba(244, 71, 71, 0.3);
+    color: #F48771;
+}
+
+.api-key-status.status-not-set {
+    background-color: rgba(135, 135, 135, 0.1);
+    border-color: rgba(135, 135, 135, 0.3);
+    color: #858585;
+}
+
+.api-key-status.status-success {
+    background-color: rgba(73, 190, 133, 0.15);
+    border-color: rgba(73, 190, 133, 0.4);
+    color: #89D185;
+}
+
 /* Blackboard Inspector */
 .blackboard-inspector {
     background-color: var(--bg-primary);

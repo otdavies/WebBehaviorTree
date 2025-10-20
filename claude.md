@@ -86,6 +86,13 @@ FileIO handles download/upload. Format includes nodes, connections, positions, c
 **Test**: `npm test` (Vitest)
 **Serve**: Serve `index.html` via any HTTP server
 
+## AI Assistant
+
+Optional AI chat integration using OpenRouter.ai
+- Supports Claude, GPT-4, and 300+ models
+- Users bring their own API key
+- See README.md for setup
+
 ## Code Conventions
 
 **Imports**: Explicit imports, no barrel exports

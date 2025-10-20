@@ -8,7 +8,7 @@ import {
     AddNodeOperation,
     ConnectNodesOperation,
     DisconnectNodeOperation
-} from '../actions/EditorActions.js';
+} from '../operations/Operations.js';
 import { NodeRegistry } from '../core/NodeRegistry.js';
 import { Toast } from '../ui/Toast.js';
 

@@ -1,7 +1,7 @@
 import { TreeNode } from '../core/TreeNode.js';
 import { ParameterDefinition } from '../core/NodeParameter.js';
 import { OperationHistory } from '../core/Operation.js';
-import { UpdateNodeLabelOperation, UpdateNodeParameterOperation } from '../actions/EditorActions.js';
+import { UpdateNodeLabelOperation, UpdateNodeParameterOperation } from '../operations/Operations.js';
 
 /**
  * InspectorPanel: Unity-style inspector for viewing and editing node properties

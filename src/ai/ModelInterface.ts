@@ -5,9 +5,9 @@ import { OperationHistory } from '../core/Operation.js';
 import { TreeNode } from '../core/TreeNode.js';
 import { Vector2 } from '../utils/Vector2.js';
 import { NodeRegistry } from '../core/NodeRegistry.js';
-import { AddNodeOperation, RemoveNodeOperation, MoveNodeOperation } from '../actions/NodeOperations.js';
-import { ConnectNodesOperation, DisconnectNodeOperation } from '../actions/ConnectionOperations.js';
-import { UpdateNodeCodeOperation } from '../actions/EditorActions.js';
+import { AddNodeOperation, RemoveNodeOperation, MoveNodeOperation } from '../operations/NodeOperations.js';
+import { ConnectNodesOperation, DisconnectNodeOperation } from '../operations/ConnectionOperations.js';
+import { UpdateNodeCodeOperation } from '../operations/Operations.js';
 
 /**
  * ModelInterface: Programmatic API for AI to manipulate the behavior tree
@@ -73,12 +73,21 @@ export interface Position {
  * ModelInterface class
  */
 export class ModelInterface {
+    private codeEditorPanel?: any; // CodeEditorPanel type (avoid circular dependency)
+
     constructor(
         private editorState: EditorState,
         private viewport: Viewport,
         private selectionManager: SelectionManager,
         private operationHistory: OperationHistory
-    ) {}
+    ) { }
+
+    /**
+     * Sets the code editor panel reference (called after initialization)
+     */
+    public setCodeEditorPanel(codeEditorPanel: any): void {
+        this.codeEditorPanel = codeEditorPanel;
+    }
 
     // ========================================================================
     // NODE OPERATIONS
@@ -170,21 +179,40 @@ export class ModelInterface {
     /**
      * Updates the code of a node
      *
-     * @param nodeId - ID of the node to update
-     * @param code - New code content
+     * @param nodeIdOrCode - ID of the node to update, or the code if updating the open node
+     * @param code - New code content (optional if first param is code)
      * @returns Result indicating success/failure
      */
-    public updateNodeCode(nodeId: string, code: string): OperationResult {
+    public updateNodeCode(nodeIdOrCode: string, code?: string): OperationResult {
         try {
-            const node = this.editorState.findNodeById(nodeId);
-            if (!node) {
-                return {
-                    success: false,
-                    error: `Node not found: ${nodeId}`
-                };
+            let node: TreeNode | null = null;
+            let actualCode: string;
+
+            // If code is not provided, assume first param is code and use open node
+            if (code === undefined) {
+                actualCode = nodeIdOrCode;
+                if (this.codeEditorPanel) {
+                    node = this.codeEditorPanel.getCurrentNode();
+                }
+                if (!node) {
+                    return {
+                        success: false,
+                        error: 'No node is currently open in the code editor'
+                    };
+                }
+            } else {
+                // First param is nodeId, second param is code
+                actualCode = code;
+                node = this.editorState.findNodeById(nodeIdOrCode);
+                if (!node) {
+                    return {
+                        success: false,
+                        error: `Node not found: ${nodeIdOrCode}`
+                    };
+                }
             }
 
-            const operation = new UpdateNodeCodeOperation(node, code);
+            const operation = new UpdateNodeCodeOperation(node, actualCode);
             this.operationHistory.execute(operation);
 
             return { success: true };
@@ -642,13 +670,57 @@ export class ModelInterface {
                     status: node.status,
                     code: node.code,
                     parentId: node.parent?.id || null,
-                    childIds: node.children.map(c => c.id)
+                    childIds: node.children.map((c: TreeNode) => c.id)
                 }
             };
         } catch (error) {
             return {
                 success: false,
                 error: `Failed to get node: ${(error as Error).message}`
+            };
+        }
+    }
+
+    /**
+     * Gets the node currently open in the code editor
+     *
+     * @returns Result with node data if a node is open
+     */
+    public getOpenNode(): OperationResult {
+        try {
+            if (!this.codeEditorPanel) {
+                return {
+                    success: false,
+                    error: 'Code editor panel not initialized'
+                };
+            }
+
+            const node = this.codeEditorPanel.getCurrentNode();
+            if (!node) {
+                return {
+                    success: false,
+                    error: 'No node is currently open in the code editor'
+                };
+            }
+
+            return {
+                success: true,
+                data: {
+                    id: node.id,
+                    type: node.type,
+                    label: node.label,
+                    category: node.category,
+                    position: { x: node.position.x, y: node.position.y },
+                    status: node.status,
+                    code: node.code,
+                    parentId: node.parent?.id || null,
+                    childIds: node.children.map((c: TreeNode) => c.id)
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: `Failed to get open node: ${(error as Error).message}`
             };
         }
     }

@@ -11,6 +11,7 @@ https://otdavies.github.io/WebBehaviorTree/
 - Real-time execution and debugging
 - Import/Export JSON functionality
 - Blackboard system for shared state
+- AI assistant integration (optional OpenRouter setup)
 
 ## Development
 
@@ -36,6 +37,29 @@ npm run serve
 ```
 
 Then open http://localhost:8080 in your browser.
+
+## AI Chat Setup (Optional)
+
+The AI assistant can help you build behavior trees through natural language.
+
+### Quick Setup:
+1. Visit [openrouter.ai](https://openrouter.ai) and sign up (free)
+2. Get your API key (starts with `sk-or-v1-`)
+3. Open Settings (⚙️) in the toolbar → AI Assistant
+4. Paste your API key
+5. Start chatting! Click the sparkles icon (✨) in the status bar
+
+**What it costs:**
+- $1 free credit for new users
+- Claude 3.5 Sonnet: ~$3 per million input tokens
+- Or use free models like DeepSeek
+- Pay as you go, no subscription
+
+**What you can do:**
+- "Create a sequence node with two action children"
+- "Add an action that increments a counter"
+- "Connect these nodes together"
+- AI executes operations with full undo/redo support
 
 ### Scripts
 

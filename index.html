@@ -82,6 +82,41 @@
 
                 <div class="panel-content">
                     <section class="settings-section">
+                        <h3>AI Assistant</h3>
+                        <div class="settings-property">
+                            <label class="settings-property-label">OpenRouter API Key</label>
+                            <div class="api-key-input-group">
+                                <input type="password" id="api-key-input" class="api-key-input" placeholder="sk-or-v1-..." autocomplete="off">
+                            </div>
+                            <div class="settings-help-text" style="background: #2C2C2C; border-left: 3px solid #3498DB; padding: 12px; margin-top: 8px; border-radius: 4px;">
+                                <p style="margin: 0 0 8px 0; font-weight: 600; color: #3498DB;">
+                                    <i class="fas fa-info-circle"></i> Get your free API key at openrouter.ai
+                                </p>
+                                <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.6;">
+                                    <li>Sign up for free at <a href="https://openrouter.ai" target="_blank" style="color: #3498DB;">openrouter.ai</a></li>
+                                    <li>Get $1 free credit to start</li>
+                                    <li>Access Claude, GPT-4, and 300+ models</li>
+                                    <li>No proxy needed - works directly from browser</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="settings-actions">
+                            <button id="btn-save-api-key" class="settings-action-btn">
+                                <i class="fas fa-save"></i>
+                                <span>Save API Key</span>
+                            </button>
+                            <button id="btn-clear-api-key" class="settings-action-btn settings-action-btn-danger">
+                                <i class="fas fa-trash"></i>
+                                <span>Clear API Key</span>
+                            </button>
+                        </div>
+                        <div id="api-key-status" class="api-key-status status-not-set">
+                            <i class="fas fa-info-circle"></i>
+                            <span>No API key configured</span>
+                        </div>
+                    </section>
+
+                    <section class="settings-section">
                         <h3>File</h3>
                         <div class="settings-actions">
                             <button id="btn-export" class="settings-action-btn" title="Export tree as JSON">

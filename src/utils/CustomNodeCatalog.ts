@@ -330,4 +330,36 @@ export class CustomNodeCatalog {
     public static count(): number {
         return this.customNodes.size;
     }
+
+    /**
+     * Registers all custom nodes with the NodeRegistry
+     * This should be called after loading custom nodes to make them available in the editor
+     */
+    public static registerAllWithNodeRegistry(nodeRegistry: any, customActionNodeClass: any): void {
+        const customNodes = this.getAllCustomNodes();
+
+        for (const customNode of customNodes) {
+            nodeRegistry.register({
+                type: customNode.type,
+                category: customNode.category,
+                label: customNode.label,
+                description: customNode.description || 'Custom user-defined node',
+                icon: customNode.icon,
+                factory: () => {
+                    const node = new customActionNodeClass(
+                        customNode.type,
+                        customNode.label,
+                        customNode.code,
+                        customNode.icon
+                    );
+                    // Set library tracking metadata
+                    node.libraryType = customNode.type;
+                    node.libraryVersion = customNode.version;
+                    node.isModified = false;
+                    return node;
+                },
+                tags: customNode.tags || ['custom', customNode.label.toLowerCase()]
+            });
+        }
+    }
 }
