@@ -1,0 +1,128 @@
+{
+  "version": "1.2",
+  "metadata": {
+    "name": "Unity Combat AI",
+    "description": "Enemy AI with patrol and combat states",
+    "created": "2025-01-01T00:00:00.000Z",
+    "tags": ["unity", "combat", "enemy", "intermediate"]
+  },
+  "tree": {
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "label": "Start",
+        "category": "decorator",
+        "position": { "x": 100, "y": 300 },
+        "icon": "fa-play",
+        "color": "#9b59b6",
+        "children": ["selector-1"]
+      },
+      {
+        "id": "selector-1",
+        "type": "selector",
+        "label": "Behavior Selector",
+        "category": "composite",
+        "position": { "x": 300, "y": 300 },
+        "icon": "fa-random",
+        "color": "#3498db",
+        "children": ["sequence-combat", "sequence-patrol"]
+      },
+      {
+        "id": "sequence-combat",
+        "type": "sequence",
+        "label": "Combat Behavior",
+        "category": "composite",
+        "position": { "x": 500, "y": 200 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-detect", "action-chase", "action-attack"]
+      },
+      {
+        "id": "action-detect",
+        "type": "action",
+        "label": "Detect Player",
+        "category": "leaf",
+        "position": { "x": 700, "y": 100 },
+        "icon": "fa-eye",
+        "color": "#2ecc71",
+        "code": "// Check if player is in detection range\n// float distance = Vector3.Distance(transform.position, player.position);\n// return distance < detectionRange ? NodeStatus.Success : NodeStatus.Failure;",
+        "children": []
+      },
+      {
+        "id": "action-chase",
+        "type": "action",
+        "label": "Chase Player",
+        "category": "leaf",
+        "position": { "x": 700, "y": 175 },
+        "icon": "fa-running",
+        "color": "#2ecc71",
+        "code": "// Chase player with NavMesh\n// navAgent.SetDestination(player.position);\n// return agent.remainingDistance > attackRange ? NodeStatus.Running : NodeStatus.Success;",
+        "children": []
+      },
+      {
+        "id": "action-attack",
+        "type": "action",
+        "label": "Attack",
+        "category": "leaf",
+        "position": { "x": 700, "y": 250 },
+        "icon": "fa-hand-rock",
+        "color": "#2ecc71",
+        "code": "// Attack player\n// weapon.Fire(player);\n// return NodeStatus.Success;",
+        "children": []
+      },
+      {
+        "id": "sequence-patrol",
+        "type": "sequence",
+        "label": "Patrol Behavior",
+        "category": "composite",
+        "position": { "x": 500, "y": 400 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-move", "action-wait", "action-next"]
+      },
+      {
+        "id": "action-move",
+        "type": "action",
+        "label": "Move to Waypoint",
+        "category": "leaf",
+        "position": { "x": 700, "y": 350 },
+        "icon": "fa-walking",
+        "color": "#2ecc71",
+        "code": "// Move to current waypoint\n// navAgent.SetDestination(waypoints[currentIndex]);\n// return agent.remainingDistance > 0.5f ? NodeStatus.Running : NodeStatus.Success;",
+        "children": []
+      },
+      {
+        "id": "action-wait",
+        "type": "wait",
+        "label": "Wait",
+        "category": "leaf",
+        "position": { "x": 700, "y": 425 },
+        "icon": "fa-clock",
+        "color": "#2ecc71",
+        "config": { "duration": 3 },
+        "children": []
+      },
+      {
+        "id": "action-next",
+        "type": "action",
+        "label": "Next Waypoint",
+        "category": "leaf",
+        "position": { "x": 700, "y": 500 },
+        "icon": "fa-step-forward",
+        "color": "#2ecc71",
+        "code": "// Move to next waypoint\n// currentIndex = (currentIndex + 1) % waypoints.Length;\n// return NodeStatus.Success;",
+        "children": []
+      }
+    ],
+    "root": "start-1"
+  },
+  "blackboard": {
+    "initialValues": {
+      "detectionRange": 10,
+      "attackRange": 2,
+      "chaseSpeed": 6,
+      "patrolSpeed": 3
+    }
+  }
+}
