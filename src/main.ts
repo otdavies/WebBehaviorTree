@@ -21,6 +21,7 @@ import { Toast } from './ui/Toast.js';
 import { CustomNodeCatalog } from './utils/CustomNodeCatalog.js';
 import { CustomActionNode } from './nodes/leaves/CustomActionNode.js';
 import { AddNodeOperation, ClearAllNodesOperation, ImportTreeOperation, ConnectNodesOperation, UpdateNodeCodeOperation, BatchOperation } from './actions/EditorActions.js';
+import { UnityCSharpExporter } from './export/UnityCSharpExporter.js';
 
 // Initialize custom node catalog
 CustomNodeCatalog.initialize();
@@ -125,6 +126,16 @@ function exportTree(): void {
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
     FileIO.downloadJSON(data, `behavior-tree-${timestamp}.json`);
+}
+
+/**
+ * Exports the current tree as Unity C# code
+ */
+function exportUnityCS(): void {
+    const code = UnityCSharpExporter.export(editorState.behaviorTree);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+    FileIO.downloadText(code, `BehaviorTreeAI-${timestamp}.cs`, 'text/plain');
+    Toast.show('Unity C# exported', 2000);
 }
 
 /**
@@ -375,6 +386,7 @@ function initializeApp(): void {
 
     // Wire up settings panel
     settingsPanel.onExport = exportTree;
+    settingsPanel.onExportUnity = exportUnityCS;
     settingsPanel.onImport = importTree;
     settingsPanel.onClear = clearTree;
 

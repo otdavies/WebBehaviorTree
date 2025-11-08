@@ -11,6 +11,7 @@ export class SettingsPanel {
     private panel: HTMLElement;
     private btnClose: HTMLButtonElement;
     private btnExport: HTMLButtonElement;
+    private btnExportUnity: HTMLButtonElement;
     private btnImport: HTMLButtonElement;
     private btnClear: HTMLButtonElement;
     private fileInput: HTMLInputElement;
@@ -18,6 +19,7 @@ export class SettingsPanel {
     private blackboardInspector: HTMLElement;
 
     public onExport?: () => void;
+    public onExportUnity?: () => void;
     public onImport?: (data: any) => void;
     public onClear?: () => void;
 
@@ -29,6 +31,7 @@ export class SettingsPanel {
         this.panel = document.getElementById('settings-panel')!;
         this.btnClose = document.getElementById('btn-close-settings') as HTMLButtonElement;
         this.btnExport = document.getElementById('btn-export') as HTMLButtonElement;
+        this.btnExportUnity = document.getElementById('btn-export-unity') as HTMLButtonElement;
         this.btnImport = document.getElementById('btn-import') as HTMLButtonElement;
         this.btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
         this.fileInput = document.getElementById('file-input') as HTMLInputElement;
@@ -50,6 +53,12 @@ export class SettingsPanel {
         this.btnExport.addEventListener('click', () => {
             if (this.onExport) {
                 this.onExport();
+            }
+        });
+
+        this.btnExportUnity.addEventListener('click', () => {
+            if (this.onExportUnity) {
+                this.onExportUnity();
             }
         });
 

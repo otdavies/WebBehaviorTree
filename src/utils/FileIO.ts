@@ -23,6 +23,23 @@ export class FileIO {
     }
 
     /**
+     * Downloads text content as a file
+     */
+    public static downloadText(content: string, filename: string, mimeType: string = 'text/plain'): void {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(url);
+    }
+
+    /**
      * Triggers a file upload dialog
      * Returns a promise that resolves with the file contents
      */
