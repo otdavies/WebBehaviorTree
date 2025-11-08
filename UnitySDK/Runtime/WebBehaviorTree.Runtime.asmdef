@@ -1,0 +1,14 @@
+{
+    "name": "WebBehaviorTree.Runtime",
+    "rootNamespace": "WebBehaviorTree",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
