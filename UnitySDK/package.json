@@ -1,0 +1,17 @@
+{
+  "name": "com.webbehaviortree.sdk",
+  "version": "0.1.0",
+  "displayName": "WebBehaviorTree SDK",
+  "description": "Runtime SDK for executing behavior trees designed in the WebBehaviorTree editor",
+  "unity": "2020.3",
+  "keywords": [
+    "behavior tree",
+    "ai",
+    "runtime"
+  ],
+  "author": {
+    "name": "WebBehaviorTree",
+    "url": "https://github.com/otdavies/WebBehaviorTree"
+  },
+  "license": "MIT"
+}
