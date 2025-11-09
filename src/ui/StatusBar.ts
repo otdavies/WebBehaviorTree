@@ -40,15 +40,14 @@ export class StatusBar {
             this.update();
         });
 
-        // Make tick rate item clickable to focus settings slider
+        // Make tick rate item clickable to focus toolbar tick rate input
         const tickRateItem = document.getElementById('status-tick-rate');
         if (tickRateItem) {
             tickRateItem.style.cursor = 'pointer';
             tickRateItem.addEventListener('click', () => {
-                // Could open settings panel or show a quick adjust popup
-                const settingsTickRate = document.getElementById('settings-tick-rate') as HTMLInputElement;
-                if (settingsTickRate) {
-                    settingsTickRate.focus();
+                if (this.toolbarTickRateInput) {
+                    this.toolbarTickRateInput.focus();
+                    this.toolbarTickRateInput.select(); // Select the value for easy editing
                 }
             });
         }

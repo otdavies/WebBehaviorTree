@@ -43,9 +43,9 @@
             </div>
 
             <div class="toolbar-section">
-                <div class="toolbar-tick-rate" title="Tick rate (ticks per second)">
+                <div class="toolbar-tick-rate" title="Tick rate: 1-60 ticks per second">
                     <i class="fas fa-tachometer-alt"></i>
-                    <input type="number" id="toolbar-tick-rate" min="1" max="60" value="10" class="tick-rate-input">
+                    <input type="number" id="toolbar-tick-rate" min="1" max="60" value="10" class="tick-rate-input" title="Tick rate (1-60)">
                     <span class="tick-rate-unit">tps</span>
                 </div>
                 <div class="toolbar-separator"></div>
@@ -155,7 +155,7 @@
                     <i class="fas fa-hashtag"></i>
                     Tick: <span class="status-item-value" id="status-tick-count-value">0</span>
                 </div>
-                <div class="status-item" id="status-tick-rate" title="Click to adjust tick rate">
+                <div class="status-item" id="status-tick-rate" title="Current tick rate (click to adjust)">
                     <i class="fas fa-tachometer-alt"></i>
                     <span class="status-item-value" id="status-tick-rate-value">10</span> ticks/s
                 </div>
