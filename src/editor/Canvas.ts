@@ -191,14 +191,23 @@ export class Canvas {
         // Render temporary connection (while dragging)
         if (this.editorState.tempConnection) {
             const temp = this.editorState.tempConnection;
-            const hasAddPort = temp.from.category === 'composite' || temp.from.category === 'decorator';
-            const fromPositions = this.nodeRenderer.getOutputPortPositions(
-                temp.from,
-                temp.from.position,
-                temp.from.children.length,
-                hasAddPort
-            );
-            const fromPos = fromPositions[temp.fromPort] || fromPositions[0];
+            const fromPortType = temp.fromPortType || 'output';
+            let fromPos: Vector2;
+
+            if (fromPortType === 'output') {
+                // Dragging from output port (bottom of node)
+                const hasAddPort = temp.from.category === 'composite' || temp.from.category === 'decorator';
+                const fromPositions = this.nodeRenderer.getOutputPortPositions(
+                    temp.from,
+                    temp.from.position,
+                    temp.from.children.length,
+                    hasAddPort
+                );
+                fromPos = fromPositions[temp.fromPort] || fromPositions[0];
+            } else {
+                // Dragging from input port (top of node)
+                fromPos = this.nodeRenderer.getInputPortPosition(temp.from, temp.from.position);
+            }
 
             this.connectionRenderer.drawTemporaryConnection(ctx, fromPos, temp.toPos);
         }
