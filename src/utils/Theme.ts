@@ -33,14 +33,16 @@ export const Theme = {
 
     // Layout constants
     layout: {
-        nodeMinWidth: 180,
-        nodeHeight: 80,
-        portRadius: 8,
-        portClickRadius: 20,
-        outputPortSpacing: 40,
-        iconSize: 24,
-        fontSize: 14,
-        statusIndicatorRadius: 8
+        nodeMinWidth: 120,
+        nodeHeight: 50,
+        portRadius: 6,
+        portClickRadius: 15,
+        outputPortSpacing: 30,
+        multiPortWidth: 24,  // Width of multi-ports (wide connection ports)
+        multiPortHeight: 8,  // Height of multi-ports
+        iconSize: 0,  // Icons removed for sleeker design
+        fontSize: 13,
+        statusIndicatorRadius: 6
     }
 } as const;
 

@@ -8,10 +8,8 @@ import {
     ShadowConstants,
     StrokeConstants,
     ProgressBarConstants,
-    IconConstants,
     PulseAnimationConstants,
-    HoverConstants,
-    ConnectionConstants
+    HoverConstants
 } from '../utils/RendererConstants.js';
 
 /**
@@ -41,13 +39,18 @@ export class NodeRenderer {
             return this.NODE_MIN_WIDTH;
         }
 
-        // Calculate width needed for output ports
-        // Each child needs PORT_SPACING, plus room for the add port (if we can add more)
-        const childCount = node.children.length;
-        const canAddMore = node.canAddMoreChildren();
-        const portsNeeded = canAddMore ? childCount + 1 : childCount; // +1 for add port if available
-        const widthForPorts = portsNeeded * this.OUTPUT_PORT_SPACING + NodeConstants.PORT_WIDTH_MARGIN;
+        // For multi-ports, we only need the minimum width (one wide port fits all connections)
+        if (node.outputPortType === 'multi') {
+            return this.NODE_MIN_WIDTH;
+        }
 
+        // For single ports, calculate width needed for individual output ports
+        const childCount = node.children.length;
+        if (childCount === 0) {
+            return this.NODE_MIN_WIDTH;
+        }
+
+        const widthForPorts = childCount * this.OUTPUT_PORT_SPACING + NodeConstants.PORT_WIDTH_MARGIN;
         return Math.max(this.NODE_MIN_WIDTH, widthForPorts);
     }
 
@@ -88,10 +91,7 @@ export class NodeRenderer {
         // Draw node body
         this.drawNodeBody(ctx, node, pos, node.color, isSelected, isHovered);
 
-        // Draw icon
-        this.drawIcon(ctx, node, pos, node.icon, viewport);
-
-        // Draw label
+        // Draw label (centered, no icon)
         this.drawLabel(ctx, node, pos, node.label, viewport);
 
         // Draw status indicator
@@ -104,9 +104,8 @@ export class NodeRenderer {
         }
 
         if (node.category === 'composite' || node.category === 'decorator') {
-            // Show existing child ports + an "add" port (only if we can add more children)
-            const showAddPort = node.canAddMoreChildren();
-            this.drawOutputPorts(ctx, node, pos, node.children.length, showAddPort);
+            // Draw output ports (multi-port or individual ports based on node type)
+            this.drawOutputPorts(ctx, node, pos, node.children.length, false);
         } else if (node.children.length > 0) {
             // Leaf nodes shouldn't have children, but if they do, show them
             this.drawOutputPorts(ctx, node, pos, node.children.length, false);
@@ -225,140 +224,16 @@ export class NodeRenderer {
     }
 
     /**
-     * Draws an icon (Font Awesome icon name)
+     * Draws the node label (centered)
      */
-    private drawIcon(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, icon: string, viewport: Viewport): void {
-        const nodeWidth = NodeRenderer.getNodeWidth(node);
-        const iconSize = Theme.layout.iconSize / viewport.zoom;
-        const iconX = pos.x - nodeWidth / 2 + NodeRenderer.NODE_PADDING + iconSize / 2;
-        const iconY = pos.y - iconSize / 2;
-
-        ctx.fillStyle = '#E0E0E0';
-        ctx.font = `900 ${iconSize}px "Font Awesome 6 Free"`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // Font Awesome uses unicode characters - we'll use simple shapes for now
-        // In a real implementation, you'd use actual Font Awesome icons
-        this.drawSimpleIcon(ctx, icon, iconX, iconY, iconSize);
-    }
-
-    /**
-     * Draws simple icon shapes (placeholder for Font Awesome)
-     */
-    private drawSimpleIcon(ctx: CanvasRenderingContext2D, icon: string, x: number, y: number, size: number): void {
-        ctx.strokeStyle = '#E0E0E0';
-        ctx.fillStyle = '#E0E0E0';
-        ctx.lineWidth = StrokeConstants.ICON_LINE;
-
-        // Map icon names to simple shapes
-        switch (icon) {
-            case 'fa-list': // Sequence
-                for (let i = 0; i < IconConstants.LIST_LINE_COUNT; i++) {
-                    ctx.fillRect(
-                        x - size * IconConstants.SHAPE_FRACTION_THIRD,
-                        y - size * IconConstants.SHAPE_FRACTION_THIRD + i * size * IconConstants.LIST_LINE_SPACING,
-                        size * IconConstants.SHAPE_FRACTION_HALF,
-                        IconConstants.LIST_LINE_HEIGHT
-                    );
-                }
-                break;
-            case 'fa-random': // Selector
-                ctx.beginPath();
-                ctx.moveTo(x - size * IconConstants.SHAPE_FRACTION_THIRD, y);
-                ctx.lineTo(x, y - size * IconConstants.SHAPE_FRACTION_THIRD);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y);
-                ctx.lineTo(x, y + size * IconConstants.SHAPE_FRACTION_THIRD);
-                ctx.closePath();
-                ctx.stroke();
-                break;
-            case 'fa-layer-group': // Parallel
-                ctx.strokeRect(
-                    x - size * IconConstants.SHAPE_FRACTION_THIRD,
-                    y - size * IconConstants.SHAPE_FRACTION_THIRD,
-                    size * IconConstants.SHAPE_FRACTION_HALF,
-                    size * IconConstants.SHAPE_FRACTION_HALF
-                );
-                ctx.strokeRect(
-                    x - size * IconConstants.SHAPE_FRACTION_QUARTER,
-                    y - size * IconConstants.SHAPE_FRACTION_QUARTER,
-                    size * IconConstants.SHAPE_FRACTION_HALF,
-                    size * IconConstants.SHAPE_FRACTION_HALF
-                );
-                break;
-            case 'fa-exchange-alt': // Inverter
-                ctx.beginPath();
-                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.fillRect(
-                    x - size * IconConstants.SHAPE_FRACTION_QUARTER,
-                    y - 1,
-                    size * IconConstants.SHAPE_FRACTION_HALF,
-                    IconConstants.LIST_LINE_HEIGHT
-                );
-                break;
-            case 'fa-redo': // Repeater
-                ctx.beginPath();
-                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, Math.PI * 0.2, Math.PI * 1.8);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x + size * IconConstants.SHAPE_FRACTION_QUARTER, y - size * IconConstants.SHAPE_FRACTION_QUARTER);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y - size * IconConstants.SHAPE_FRACTION_THIRD);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y - size * IconConstants.SHAPE_FRACTION_SIXTH);
-                ctx.fill();
-                break;
-            case 'fa-times-circle': // Until Fail
-                ctx.beginPath();
-                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x - size * IconConstants.SHAPE_FRACTION_FIFTH, y - size * IconConstants.SHAPE_FRACTION_FIFTH);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_FIFTH, y + size * IconConstants.SHAPE_FRACTION_FIFTH);
-                ctx.moveTo(x + size * IconConstants.SHAPE_FRACTION_FIFTH, y - size * IconConstants.SHAPE_FRACTION_FIFTH);
-                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_FIFTH, y + size * IconConstants.SHAPE_FRACTION_FIFTH);
-                ctx.stroke();
-                break;
-            case 'fa-check-circle': // Until Success
-                ctx.beginPath();
-                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x - size * IconConstants.SHAPE_FRACTION_QUARTER, y);
-                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_EIGHTH, y + size * IconConstants.SHAPE_FRACTION_QUARTER);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_THIRD, y - size * IconConstants.SHAPE_FRACTION_QUARTER);
-                ctx.stroke();
-                break;
-            case 'fa-bolt': // Action
-                ctx.beginPath();
-                ctx.moveTo(x, y - size * IconConstants.SHAPE_FRACTION_HALF);
-                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_FIFTH, y);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_TENTH, y);
-                ctx.lineTo(x - size * IconConstants.SHAPE_FRACTION_TENTH, y + size * IconConstants.SHAPE_FRACTION_HALF);
-                ctx.lineTo(x + size * IconConstants.SHAPE_FRACTION_FIFTH, y - size * IconConstants.SHAPE_FRACTION_TENTH);
-                ctx.lineTo(x, y - size * IconConstants.SHAPE_FRACTION_TENTH);
-                ctx.closePath();
-                ctx.fill();
-                break;
-            default:
-                // Default circle
-                ctx.beginPath();
-                ctx.arc(x, y, size * IconConstants.SHAPE_FRACTION_THIRD, 0, Math.PI * 2);
-                ctx.fill();
-        }
-    }
-
-    /**
-     * Draws the node label
-     */
-    private drawLabel(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, label: string, viewport: Viewport): void {
-        const nodeWidth = NodeRenderer.getNodeWidth(node);
+    private drawLabel(ctx: CanvasRenderingContext2D, _node: TreeNode, pos: Vector2, label: string, viewport: Viewport): void {
         const fontSize = Theme.layout.fontSize / viewport.zoom;
-        const labelX = pos.x - nodeWidth / 2 + NodeRenderer.NODE_PADDING + NodeConstants.ICON_OFFSET_X;
+        const labelX = pos.x;
         const labelY = pos.y;
 
         ctx.fillStyle = '#E0E0E0';
         ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
-        ctx.textAlign = 'left';
+        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label, labelX, labelY);
     }
@@ -418,72 +293,74 @@ export class NodeRenderer {
      */
     private drawInputPort(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2): void {
         const portPos = this.getInputPortPosition(node, pos);
+        const isMultiPort = node.inputPortType === 'multi';
 
-        // Draw click area outline for debugging
-        ctx.strokeStyle = 'rgba(52, 152, 219, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(portPos.x, portPos.y, NodeRenderer.PORT_CLICK_RADIUS, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Draw actual port
         ctx.fillStyle = Theme.ui.connection;
         ctx.strokeStyle = Theme.grid;
         ctx.lineWidth = StrokeConstants.PORT_BORDER;
 
-        ctx.beginPath();
-        ctx.arc(portPos.x, portPos.y, NodeRenderer.PORT_RADIUS, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-    }
+        if (isMultiPort) {
+            // Draw wide rectangular multi-port
+            const halfWidth = Theme.layout.multiPortWidth / 2;
+            const halfHeight = Theme.layout.multiPortHeight / 2;
 
-    /**
-     * Draws output ports (bottom of node)
-     */
-    private drawOutputPorts(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, count: number, showAddPort: boolean): void {
-        const positions = this.getOutputPortPositions(node, pos, count, showAddPort);
-
-        // Draw regular ports
-        for (let i = 0; i < count; i++) {
-            const portPos = positions[i];
-            ctx.fillStyle = Theme.ui.connection;
-            ctx.strokeStyle = Theme.grid;
-            ctx.lineWidth = StrokeConstants.PORT_BORDER;
-
+            ctx.beginPath();
+            ctx.roundRect(
+                portPos.x - halfWidth,
+                portPos.y - halfHeight,
+                Theme.layout.multiPortWidth,
+                Theme.layout.multiPortHeight,
+                2
+            );
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            // Draw circular single port
             ctx.beginPath();
             ctx.arc(portPos.x, portPos.y, NodeRenderer.PORT_RADIUS, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
         }
+    }
 
-        // Draw add port (+) if enabled
-        if (showAddPort) {
-            const addPortPos = positions[count];
+    /**
+     * Draws output ports (bottom of node)
+     * For multi-ports: draws one wide port that accepts unlimited connections
+     * For single ports: draws individual circular ports (one per potential connection)
+     */
+    private drawOutputPorts(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, count: number, _showAddPort: boolean): void {
+        const isMultiPort = node.outputPortType === 'multi';
 
-            // Draw circle with dashed border
-            ctx.fillStyle = 'rgba(127, 140, 141, 0.3)';
-            ctx.strokeStyle = Theme.ui.hover;
-            ctx.lineWidth = StrokeConstants.PORT_BORDER;
-            ctx.setLineDash([ConnectionConstants.RESIZE_HANDLE_DASH_LONG, ConnectionConstants.RESIZE_HANDLE_DASH_SHORT]);
+        ctx.fillStyle = Theme.ui.connection;
+        ctx.strokeStyle = Theme.grid;
+        ctx.lineWidth = StrokeConstants.PORT_BORDER;
+
+        if (isMultiPort) {
+            // Draw single wide multi-port (centered at bottom of node)
+            const portPos = new Vector2(pos.x, pos.y + NodeRenderer.NODE_HEIGHT / 2);
+            const halfWidth = Theme.layout.multiPortWidth / 2;
+            const halfHeight = Theme.layout.multiPortHeight / 2;
 
             ctx.beginPath();
-            ctx.arc(addPortPos.x, addPortPos.y, NodeRenderer.ADD_PORT_RADIUS, 0, Math.PI * 2);
+            ctx.roundRect(
+                portPos.x - halfWidth,
+                portPos.y - halfHeight,
+                Theme.layout.multiPortWidth,
+                Theme.layout.multiPortHeight,
+                2
+            );
             ctx.fill();
             ctx.stroke();
-
-            ctx.setLineDash([]);
-
-            // Draw + symbol
-            ctx.strokeStyle = Theme.ui.hover;
-            ctx.lineWidth = StrokeConstants.PORT_BORDER;
-            const plusSize = IconConstants.PLUS_SIZE;
-
-            ctx.beginPath();
-            ctx.moveTo(addPortPos.x - plusSize, addPortPos.y);
-            ctx.lineTo(addPortPos.x + plusSize, addPortPos.y);
-            ctx.moveTo(addPortPos.x, addPortPos.y - plusSize);
-            ctx.lineTo(addPortPos.x, addPortPos.y + plusSize);
-            ctx.stroke();
+        } else {
+            // Draw individual circular ports for each child (single port mode)
+            const positions = this.getOutputPortPositions(node, pos, count, false);
+            for (let i = 0; i < count; i++) {
+                const portPos = positions[i];
+                ctx.beginPath();
+                ctx.arc(portPos.x, portPos.y, NodeRenderer.PORT_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
         }
     }
 
@@ -499,26 +376,33 @@ export class NodeRenderer {
 
     /**
      * Gets output port positions in world space
-     * @param _node The tree node (reserved for future use)
+     * @param node The tree node
      * @param nodePos Node position
      * @param count Number of child ports
-     * @param includeAddPort Whether to include the add (+) port position
+     * @param _includeAddPort Deprecated (no longer used)
      */
-    public getOutputPortPositions(_node: TreeNode, nodePos: Vector2, count: number, includeAddPort: boolean = false): Vector2[] {
+    public getOutputPortPositions(node: TreeNode, nodePos: Vector2, count: number, _includeAddPort: boolean = false): Vector2[] {
         const positions: Vector2[] = [];
-        const spacing = NodeRenderer.OUTPUT_PORT_SPACING;
-
-        // Calculate total ports (children + add port if enabled)
-        const totalPorts = includeAddPort ? count + 1 : count;
-
-        // If no ports at all, return empty
-        if (totalPorts === 0) return positions;
-
-        const totalWidth = (totalPorts - 1) * spacing;
-        const startX = nodePos.x - totalWidth / 2;
         const y = nodePos.y + NodeRenderer.NODE_HEIGHT / 2;
 
-        for (let i = 0; i < totalPorts; i++) {
+        // For multi-ports, all connections originate from the same center position
+        if (node.outputPortType === 'multi') {
+            const centerPos = new Vector2(nodePos.x, y);
+            // Return the same position for all children
+            for (let i = 0; i < count; i++) {
+                positions.push(centerPos);
+            }
+            return positions;
+        }
+
+        // For single ports, each child gets its own position
+        const spacing = NodeRenderer.OUTPUT_PORT_SPACING;
+        if (count === 0) return positions;
+
+        const totalWidth = (count - 1) * spacing;
+        const startX = nodePos.x - totalWidth / 2;
+
+        for (let i = 0; i < count; i++) {
             positions.push(new Vector2(
                 startX + i * spacing,
                 y
@@ -546,32 +430,56 @@ export class NodeRenderer {
     /**
      * Finds which port (if any) is at a given point
      */
-    public getPortAtPoint(node: TreeNode, point: Vector2): { type: 'input' | 'output'; index: number; isAddPort?: boolean } | null {
+    public getPortAtPoint(node: TreeNode, point: Vector2): { type: 'input' | 'output'; index: number; isMultiPort?: boolean } | null {
         // Check input port (only if node has input ports)
         if (node.numInputs > 0) {
             const inputPos = this.getInputPortPosition(node, node.position);
-            if (inputPos.distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
-                return { type: 'input', index: 0 };
+            const isMultiPort = node.inputPortType === 'multi';
+
+            // Multi-ports use rectangular hit testing
+            if (isMultiPort) {
+                const halfWidth = Theme.layout.multiPortWidth / 2;
+                const halfHeight = Theme.layout.multiPortHeight / 2;
+                const clickPadding = 5; // Extra padding for easier clicking
+
+                if (point.x >= inputPos.x - halfWidth - clickPadding &&
+                    point.x <= inputPos.x + halfWidth + clickPadding &&
+                    point.y >= inputPos.y - halfHeight - clickPadding &&
+                    point.y <= inputPos.y + halfHeight + clickPadding) {
+                    return { type: 'input', index: 0, isMultiPort: true };
+                }
+            } else {
+                // Single ports use circular hit testing
+                if (inputPos.distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
+                    return { type: 'input', index: 0, isMultiPort: false };
+                }
             }
         }
 
         // Check output ports
         if (node.category === 'composite' || node.category === 'decorator') {
-            const hasAddPort = node.canAddMoreChildren();
-            const outputPositions = this.getOutputPortPositions(node, node.position, node.children.length, hasAddPort);
+            const isMultiPort = node.outputPortType === 'multi';
 
-            // Check existing child ports
-            for (let i = 0; i < node.children.length; i++) {
-                if (outputPositions[i].distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
-                    return { type: 'output', index: i };
+            if (isMultiPort) {
+                // Single wide multi-port at bottom center
+                const portPos = new Vector2(node.position.x, node.position.y + NodeRenderer.NODE_HEIGHT / 2);
+                const halfWidth = Theme.layout.multiPortWidth / 2;
+                const halfHeight = Theme.layout.multiPortHeight / 2;
+                const clickPadding = 5;
+
+                if (point.x >= portPos.x - halfWidth - clickPadding &&
+                    point.x <= portPos.x + halfWidth + clickPadding &&
+                    point.y >= portPos.y - halfHeight - clickPadding &&
+                    point.y <= portPos.y + halfHeight + clickPadding) {
+                    return { type: 'output', index: 0, isMultiPort: true };
                 }
-            }
-
-            // Check add port (only if we can add more children)
-            if (hasAddPort && outputPositions.length > node.children.length) {
-                const addPortPos = outputPositions[node.children.length];
-                if (addPortPos.distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
-                    return { type: 'output', index: node.children.length, isAddPort: true };
+            } else {
+                // Individual ports for each child (single port mode)
+                const outputPositions = this.getOutputPortPositions(node, node.position, node.children.length, false);
+                for (let i = 0; i < node.children.length; i++) {
+                    if (outputPositions[i].distanceTo(point) <= NodeRenderer.PORT_CLICK_RADIUS) {
+                        return { type: 'output', index: i, isMultiPort: false };
+                    }
                 }
             }
         }

@@ -81,7 +81,7 @@ export class InteractionManager {
         if (e.button === 0) {
             // Check for port clicks FIRST (ports extend outside node bodies)
             // Use port cache for O(1) lookup instead of O(n) iteration
-            let clickedPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number; isAddPort?: boolean } } | null = null;
+            let clickedPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number; isMultiPort?: boolean } } | null = null;
 
             // Try cache first (fast path)
             if (this.canvas.portCache.isValidCache()) {
@@ -369,7 +369,7 @@ export class InteractionManager {
         const worldPos = this.canvas.getWorldMousePos(e);
 
         // First, check if we clicked on a port
-        let clickedPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number; isAddPort?: boolean } } | null = null;
+        let clickedPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number; isMultiPort?: boolean } } | null = null;
         for (const node of this.editorState.nodes) {
             const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
             if (port) {
@@ -616,12 +616,7 @@ export class InteractionManager {
     /**
      * Handles port disconnection (right-click on port)
      */
-    private handlePortDisconnect(node: TreeNode, port: { type: 'input' | 'output'; index: number; isAddPort?: boolean }): void {
-        // Ignore add ports (nothing to disconnect)
-        if (port.isAddPort) {
-            return;
-        }
-
+    private handlePortDisconnect(node: TreeNode, port: { type: 'input' | 'output'; index: number; isMultiPort?: boolean }): void {
         if (port.type === 'input') {
             // Input port: disconnect this node from its parent
             if (node.parent) {

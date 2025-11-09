@@ -68,6 +68,10 @@ export abstract class TreeNode {
     // Number of output ports (-1 for dynamic based on children, 0 for leaf nodes)
     public numOutputs: number = -1;
 
+    // Port types: 'single' allows one connection, 'multi' allows unlimited connections
+    public inputPortType: 'single' | 'multi' = 'single';
+    public outputPortType: 'single' | 'multi' = 'multi';
+
     constructor(type: string, label: string, category: NodeCategory, icon: string, color: string) {
         this.id = this.generateId();
         this.type = type;
@@ -205,7 +209,9 @@ export abstract class TreeNode {
             children: this.children.map(child => child.id),
             libraryType: this.libraryType,
             isModified: this.isModified,
-            libraryVersion: this.libraryVersion
+            libraryVersion: this.libraryVersion,
+            inputPortType: this.inputPortType,
+            outputPortType: this.outputPortType
         };
     }
 
@@ -285,6 +291,14 @@ export abstract class TreeNode {
         }
         if (data.libraryVersion !== undefined) {
             this.libraryVersion = data.libraryVersion;
+        }
+
+        // Update port types if provided
+        if (data.inputPortType !== undefined) {
+            this.inputPortType = data.inputPortType;
+        }
+        if (data.outputPortType !== undefined) {
+            this.outputPortType = data.outputPortType;
         }
     }
 
