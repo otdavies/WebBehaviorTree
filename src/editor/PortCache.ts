@@ -162,7 +162,8 @@ export class PortCache {
             );
 
             if (isMultiPort) {
-                // For multi-ports, add one port that represents all connections
+                // For multi-ports, always add one port (even with 0 children)
+                // Multi-ports always return at least one position
                 if (outputPositions.length > 0) {
                     this.addPortToGrid({
                         node,
@@ -174,7 +175,8 @@ export class PortCache {
                     });
                 }
             } else {
-                // For single ports, add individual ports for each child
+                // For single ports, only add ports for existing children
+                // (no port shown until you have at least one child)
                 for (let i = 0; i < node.children.length; i++) {
                     this.addPortToGrid({
                         node,

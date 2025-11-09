@@ -416,9 +416,15 @@ export class NodeRenderer {
         // For multi-ports, all connections originate from the same center position
         if (node.outputPortType === 'multi') {
             const centerPos = new Vector2(nodePos.x, y);
-            // Return the same position for all children
-            for (let i = 0; i < count; i++) {
+            // Always return at least one position for multi-ports (even with 0 children)
+            // This ensures the port is clickable on newly created nodes
+            if (count === 0) {
                 positions.push(centerPos);
+            } else {
+                // Return the same position for all children
+                for (let i = 0; i < count; i++) {
+                    positions.push(centerPos);
+                }
             }
             return positions;
         }
