@@ -1,0 +1,91 @@
+{
+  "version": "1.2",
+  "metadata": {
+    "name": "Basic Selector",
+    "description": "Demonstrates a selector that tries alternatives until one succeeds. Useful for fallback behaviors.",
+    "created": "2025-01-09T00:00:00.000Z",
+    "tags": ["beginner", "tutorial", "selector"],
+    "difficulty": "beginner"
+  },
+  "tree": {
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "label": "Start",
+        "category": "decorator",
+        "position": { "x": 100, "y": 250 },
+        "icon": "fa-play",
+        "color": "#9b59b6",
+        "children": ["selector-1"],
+        "numInputs": 0,
+        "numOutputs": 1,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "selector-1",
+        "type": "selector",
+        "label": "Try Options",
+        "category": "composite",
+        "position": { "x": 300, "y": 250 },
+        "icon": "fa-random",
+        "color": "#3498db",
+        "children": ["action-1", "action-2", "action-3"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-1",
+        "type": "action",
+        "label": "First Option",
+        "category": "leaf",
+        "position": { "x": 500, "y": 150 },
+        "icon": "fa-star",
+        "color": "#2ecc71",
+        "code": "// Try first option\n// Returns failure to try next option\nreturn NodeStatus.Failure;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-2",
+        "type": "action",
+        "label": "Second Option",
+        "category": "leaf",
+        "position": { "x": 500, "y": 250 },
+        "icon": "fa-star",
+        "color": "#2ecc71",
+        "code": "// Try second option\n// This one succeeds!\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-3",
+        "type": "action",
+        "label": "Fallback Option",
+        "category": "leaf",
+        "position": { "x": 500, "y": 350 },
+        "icon": "fa-star",
+        "color": "#2ecc71",
+        "code": "// Last resort option\n// Won't be reached if earlier options succeed\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      }
+    ],
+    "root": "start-1"
+  },
+  "blackboard": {
+    "initialValues": {}
+  }
+}

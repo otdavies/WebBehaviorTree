@@ -1,0 +1,165 @@
+{
+  "version": "1.2",
+  "metadata": {
+    "name": "Nested Composites",
+    "description": "Shows how to nest sequences and selectors for complex behavior hierarchies.",
+    "created": "2025-01-09T00:00:00.000Z",
+    "tags": ["advanced", "nesting", "hierarchy"],
+    "difficulty": "advanced"
+  },
+  "tree": {
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "label": "Start",
+        "category": "decorator",
+        "position": { "x": 50, "y": 350 },
+        "icon": "fa-play",
+        "color": "#9b59b6",
+        "children": ["sequence-main"],
+        "numInputs": 0,
+        "numOutputs": 1,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "sequence-main",
+        "type": "sequence",
+        "label": "Main Flow",
+        "category": "composite",
+        "position": { "x": 250, "y": 350 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-init", "selector-choose", "action-finish"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-init",
+        "type": "action",
+        "label": "Initialize",
+        "category": "leaf",
+        "position": { "x": 450, "y": 200 },
+        "icon": "fa-power-off",
+        "color": "#2ecc71",
+        "code": "// Initialize system\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "selector-choose",
+        "type": "selector",
+        "label": "Choose Strategy",
+        "category": "composite",
+        "position": { "x": 450, "y": 350 },
+        "icon": "fa-random",
+        "color": "#3498db",
+        "children": ["seq-strategy-a", "seq-strategy-b"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "seq-strategy-a",
+        "type": "sequence",
+        "label": "Strategy A",
+        "category": "composite",
+        "position": { "x": 650, "y": 300 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-a1", "action-a2"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-a1",
+        "type": "action",
+        "label": "Task A1",
+        "category": "leaf",
+        "position": { "x": 850, "y": 250 },
+        "icon": "fa-check",
+        "color": "#2ecc71",
+        "code": "// First task of strategy A\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-a2",
+        "type": "action",
+        "label": "Task A2",
+        "category": "leaf",
+        "position": { "x": 850, "y": 350 },
+        "icon": "fa-check",
+        "color": "#2ecc71",
+        "code": "// Second task of strategy A\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "seq-strategy-b",
+        "type": "sequence",
+        "label": "Strategy B",
+        "category": "composite",
+        "position": { "x": 650, "y": 450 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-b1"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-b1",
+        "type": "action",
+        "label": "Task B1",
+        "category": "leaf",
+        "position": { "x": 850, "y": 450 },
+        "icon": "fa-check",
+        "color": "#2ecc71",
+        "code": "// Alternative strategy task\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-finish",
+        "type": "action",
+        "label": "Finalize",
+        "category": "leaf",
+        "position": { "x": 450, "y": 500 },
+        "icon": "fa-flag-checkered",
+        "color": "#2ecc71",
+        "code": "// Cleanup and finish\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      }
+    ],
+    "root": "start-1"
+  },
+  "blackboard": {
+    "initialValues": {
+      "strategyMode": "auto"
+    }
+  }
+}

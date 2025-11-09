@@ -1,0 +1,122 @@
+{
+  "version": "1.2",
+  "metadata": {
+    "name": "Conditional Logic",
+    "description": "Demonstrates conditional branching with selectors and sequences for decision-making.",
+    "created": "2025-01-09T00:00:00.000Z",
+    "tags": ["intermediate", "conditional", "decision-making"],
+    "difficulty": "intermediate"
+  },
+  "tree": {
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "label": "Start",
+        "category": "decorator",
+        "position": { "x": 100, "y": 300 },
+        "icon": "fa-play",
+        "color": "#9b59b6",
+        "children": ["selector-main"],
+        "numInputs": 0,
+        "numOutputs": 1,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "selector-main",
+        "type": "selector",
+        "label": "Choose Path",
+        "category": "composite",
+        "position": { "x": 300, "y": 300 },
+        "icon": "fa-random",
+        "color": "#3498db",
+        "children": ["seq-path-a", "seq-path-b"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "seq-path-a",
+        "type": "sequence",
+        "label": "Path A: If Condition Met",
+        "category": "composite",
+        "position": { "x": 500, "y": 200 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-check", "action-do-a"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-check",
+        "type": "action",
+        "label": "Check Condition",
+        "category": "leaf",
+        "position": { "x": 700, "y": 150 },
+        "icon": "fa-question",
+        "color": "#2ecc71",
+        "code": "// Check if condition is met\n// Example: return health > 50 ? NodeStatus.Success : NodeStatus.Failure;\nconst health = blackboard.get('health') || 75;\nreturn health > 50 ? NodeStatus.Success : NodeStatus.Failure;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-do-a",
+        "type": "action",
+        "label": "Execute Path A",
+        "category": "leaf",
+        "position": { "x": 700, "y": 250 },
+        "icon": "fa-bolt",
+        "color": "#2ecc71",
+        "code": "// Execute when condition is true\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "seq-path-b",
+        "type": "sequence",
+        "label": "Path B: Fallback",
+        "category": "composite",
+        "position": { "x": 500, "y": 400 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-do-b"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-do-b",
+        "type": "action",
+        "label": "Execute Path B",
+        "category": "leaf",
+        "position": { "x": 700, "y": 400 },
+        "icon": "fa-shield-alt",
+        "color": "#2ecc71",
+        "code": "// Execute when condition is false\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      }
+    ],
+    "root": "start-1"
+  },
+  "blackboard": {
+    "initialValues": {
+      "health": 75,
+      "hasWeapon": true
+    }
+  }
+}

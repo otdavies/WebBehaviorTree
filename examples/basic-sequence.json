@@ -1,0 +1,91 @@
+{
+  "version": "1.2",
+  "metadata": {
+    "name": "Basic Sequence",
+    "description": "Demonstrates a simple sequence that executes tasks in order. All children must succeed for the sequence to succeed.",
+    "created": "2025-01-09T00:00:00.000Z",
+    "tags": ["beginner", "tutorial", "sequence"],
+    "difficulty": "beginner"
+  },
+  "tree": {
+    "nodes": [
+      {
+        "id": "start-1",
+        "type": "start",
+        "label": "Start",
+        "category": "decorator",
+        "position": { "x": 100, "y": 250 },
+        "icon": "fa-play",
+        "color": "#9b59b6",
+        "children": ["sequence-1"],
+        "numInputs": 0,
+        "numOutputs": 1,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "sequence-1",
+        "type": "sequence",
+        "label": "Do Tasks",
+        "category": "composite",
+        "position": { "x": 300, "y": 250 },
+        "icon": "fa-arrow-right",
+        "color": "#3498db",
+        "children": ["action-1", "action-2", "action-3"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
+      },
+      {
+        "id": "action-1",
+        "type": "action",
+        "label": "First Task",
+        "category": "leaf",
+        "position": { "x": 500, "y": 150 },
+        "icon": "fa-check",
+        "color": "#2ecc71",
+        "code": "// First task to execute\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-2",
+        "type": "action",
+        "label": "Second Task",
+        "category": "leaf",
+        "position": { "x": 500, "y": 250 },
+        "icon": "fa-check",
+        "color": "#2ecc71",
+        "code": "// Second task to execute\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      },
+      {
+        "id": "action-3",
+        "type": "action",
+        "label": "Third Task",
+        "category": "leaf",
+        "position": { "x": 500, "y": 350 },
+        "icon": "fa-check",
+        "color": "#2ecc71",
+        "code": "// Third task to execute\nreturn NodeStatus.Success;",
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
+      }
+    ],
+    "root": "start-1"
+  },
+  "blackboard": {
+    "initialValues": {}
+  }
+}
