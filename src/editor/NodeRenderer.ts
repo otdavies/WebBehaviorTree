@@ -410,6 +410,7 @@ export class NodeRenderer {
 
         // Reset shadow
         ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
     }
 
     /**
