@@ -12,6 +12,7 @@ import { SettingsPanel } from './ui/SettingsPanel.js';
 import { CodeEditorPanel } from './ui/CodeEditorPanel.js';
 import { ContextMenu } from './ui/ContextMenu.js';
 import { InspectorPanel } from './ui/InspectorPanel.js';
+import { ExamplesMenu } from './ui/ExamplesMenu.js';
 import { FileIO } from './utils/FileIO.js';
 import { Vector2 } from './utils/Vector2.js';
 import { NodeExecutor } from './core/NodeExecutor.js';
@@ -73,6 +74,7 @@ let settingsPanel: SettingsPanel;
 let codeEditorPanel: CodeEditorPanel;
 let contextMenu: ContextMenu;
 let inspectorPanel: InspectorPanel;
+let examplesMenu: ExamplesMenu;
 
 /**
  * Creates a node by type using the NodeRegistry
@@ -292,6 +294,7 @@ function initializeApp(): void {
     codeEditorPanel = new CodeEditorPanel(editorState, editorState.operationHistory, NodeExecutor, CustomNodeCatalog);
     contextMenu = new ContextMenu();
     inspectorPanel = new InspectorPanel(editorState.operationHistory);
+    examplesMenu = new ExamplesMenu();
 
     // Wire up code editor panel save callback (for Ctrl+S)
     codeEditorPanel.onSaveToFile = saveTree;
@@ -384,11 +387,45 @@ function initializeApp(): void {
         settingsPanel.toggle();
     };
 
+    // Wire up examples button
+    const examplesBtn = document.getElementById('btn-examples');
+    examplesBtn?.addEventListener('click', () => {
+        examplesMenu.show();
+    });
+
     // Wire up settings panel
     settingsPanel.onExport = exportTree;
     settingsPanel.onExportUnity = exportUnityCS;
     settingsPanel.onImport = importTree;
     settingsPanel.onClear = clearTree;
+
+    // Wire up examples menu
+    examplesMenu.onExampleLoad = async (examplePath: string) => {
+        try {
+            // Fetch the example JSON file
+            const response = await fetch(examplePath);
+            if (!response.ok) {
+                throw new Error(`Failed to load example: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+
+            // Confirm before loading (since it will replace current tree)
+            const confirm = window.confirm(
+                'Loading this example will replace your current tree. Continue?\n\n' +
+                'Tip: Export your current tree first if you want to save it.'
+            );
+
+            if (confirm) {
+                importTree(data);
+                Toast.show(`Example loaded: ${data.metadata?.name || 'Unknown'}`, 2500);
+            }
+        } catch (error) {
+            console.error('Failed to load example:', error);
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            Toast.show('Failed to load example: ' + errorMsg, 3000);
+        }
+    };
 
     // Wire up context menu
     contextMenu.onNodeTypeSelect = (type: string, worldPos: Vector2) => {
