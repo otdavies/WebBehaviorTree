@@ -10,7 +10,7 @@ interface CachedPort {
     type: 'input' | 'output';
     index: number;
     position: Vector2;
-    isAddPort?: boolean;
+    isMultiPort?: boolean;
     clickRadius: number;
 }
 
@@ -103,7 +103,7 @@ export class PortCache {
      * @param point - World space position to check
      * @returns Port information if found, null otherwise
      */
-    public getPortAtPoint(point: Vector2): { node: TreeNode; port: { type: 'input' | 'output'; index: number; isAddPort?: boolean } } | null {
+    public getPortAtPoint(point: Vector2): { node: TreeNode; port: { type: 'input' | 'output'; index: number; isMultiPort?: boolean } } | null {
         if (!this.isValid) {
             return null; // Cache not built yet
         }
@@ -124,7 +124,7 @@ export class PortCache {
                         port: {
                             type: cachedPort.type,
                             index: cachedPort.index,
-                            isAddPort: cachedPort.isAddPort
+                            isMultiPort: cachedPort.isMultiPort
                         }
                     };
                 }
@@ -146,41 +146,45 @@ export class PortCache {
                 type: 'input',
                 index: 0,
                 position: inputPos,
+                isMultiPort: node.inputPortType === 'multi',
                 clickRadius: this.clickRadius
             });
         }
 
         // Add output ports
         if (node.category === 'composite' || node.category === 'decorator') {
-            const hasAddPort = node.canAddMoreChildren();
+            const isMultiPort = node.outputPortType === 'multi';
             const outputPositions = this.nodeRenderer.getOutputPortPositions(
                 node,
                 node.position,
                 node.children.length,
-                hasAddPort
+                false
             );
 
-            // Add existing child ports
-            for (let i = 0; i < node.children.length; i++) {
-                this.addPortToGrid({
-                    node,
-                    type: 'output',
-                    index: i,
-                    position: outputPositions[i],
-                    clickRadius: this.clickRadius
-                });
-            }
-
-            // Add the "add" port if present
-            if (hasAddPort && outputPositions.length > node.children.length) {
-                this.addPortToGrid({
-                    node,
-                    type: 'output',
-                    index: node.children.length,
-                    position: outputPositions[node.children.length],
-                    isAddPort: true,
-                    clickRadius: this.clickRadius
-                });
+            if (isMultiPort) {
+                // For multi-ports, add one port that represents all connections
+                if (outputPositions.length > 0) {
+                    this.addPortToGrid({
+                        node,
+                        type: 'output',
+                        index: 0,
+                        position: outputPositions[0], // All positions are the same for multi-ports
+                        isMultiPort: true,
+                        clickRadius: this.clickRadius
+                    });
+                }
+            } else {
+                // For single ports, add individual ports for each child
+                for (let i = 0; i < node.children.length; i++) {
+                    this.addPortToGrid({
+                        node,
+                        type: 'output',
+                        index: i,
+                        position: outputPositions[i],
+                        isMultiPort: false,
+                        clickRadius: this.clickRadius
+                    });
+                }
             }
         }
     }

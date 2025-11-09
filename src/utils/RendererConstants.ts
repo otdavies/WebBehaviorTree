@@ -11,23 +11,23 @@
  */
 export const NodeConstants = {
     // Corner radius for rounded rectangles
-    CORNER_RADIUS: 8,
+    CORNER_RADIUS: 6,
 
     // Inner padding for node content
-    INNER_PADDING: 12,
+    INNER_PADDING: 8,
 
     // Margin for port width calculation
-    PORT_WIDTH_MARGIN: 40,
+    PORT_WIDTH_MARGIN: 30,
 
-    // Add port (+ button) radius
+    // Add port (+ button) radius - DEPRECATED, will be removed
     ADD_PORT_RADIUS: 6,
 
-    // Icon display
-    ICON_OFFSET_X: 30, // Horizontal offset from left edge for icon
+    // Icon display - DEPRECATED, icons removed
+    ICON_OFFSET_X: 0,
 
     // Status indicator positioning
-    STATUS_INDICATOR_OFFSET: 12, // Offset from corners
-    STATUS_INDICATOR_RADIUS: 8,
+    STATUS_INDICATOR_OFFSET: 8, // Offset from corners
+    STATUS_INDICATOR_RADIUS: 6,
 } as const;
 
 /**
