@@ -224,10 +224,16 @@ export class NodeRenderer {
     }
 
     /**
-     * Draws the node label (centered)
+     * Draws the node label (centered, clipped to bounds, hidden when zoomed out)
      */
-    private drawLabel(ctx: CanvasRenderingContext2D, _node: TreeNode, pos: Vector2, label: string, viewport: Viewport): void {
+    private drawLabel(ctx: CanvasRenderingContext2D, node: TreeNode, pos: Vector2, label: string, viewport: Viewport): void {
+        // Hide labels when zoomed out below threshold (makes canvas cleaner at low zoom)
+        if (viewport.zoom < 0.5) {
+            return;
+        }
+
         const fontSize = Theme.layout.fontSize / viewport.zoom;
+        const nodeWidth = NodeRenderer.getNodeWidth(node);
         const labelX = pos.x;
         const labelY = pos.y;
 
@@ -235,7 +241,29 @@ export class NodeRenderer {
         ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+
+        // Save context for clipping
+        ctx.save();
+
+        // Create clipping region to keep text within node bounds (with padding)
+        const clipPadding = NodeRenderer.NODE_PADDING;
+        const clipWidth = nodeWidth - (clipPadding * 2);
+        const clipHeight = NodeRenderer.NODE_HEIGHT - (clipPadding * 2);
+
+        ctx.beginPath();
+        ctx.rect(
+            pos.x - clipWidth / 2,
+            pos.y - clipHeight / 2,
+            clipWidth,
+            clipHeight
+        );
+        ctx.clip();
+
+        // Draw the text (will be clipped to bounds)
         ctx.fillText(label, labelX, labelY);
+
+        // Restore context
+        ctx.restore();
     }
 
     /**

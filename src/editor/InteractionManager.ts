@@ -97,13 +97,14 @@ export class InteractionManager {
                 }
             }
 
-            if (clickedPort && clickedPort.port.type === 'output') {
-                // Start connecting from output port
+            if (clickedPort) {
+                // Start connecting from either input or output port
                 this.isConnecting = true;
                 this.editorState.tempConnection = {
                     from: clickedPort.node,
                     fromPort: clickedPort.port.index,
-                    toPos: worldPos
+                    toPos: worldPos,
+                    fromPortType: clickedPort.port.type  // Track which port type we started from
                 };
                 return;
             }
@@ -269,14 +270,16 @@ export class InteractionManager {
 
         // End connecting
         if (this.isConnecting && this.editorState.tempConnection) {
-            // Check for input port hit on ANY node
-            // Use port cache for O(1) lookup instead of O(n) iteration
+            const fromPortType = this.editorState.tempConnection.fromPortType || 'output';
+            const targetPortType = fromPortType === 'output' ? 'input' : 'output';
+
+            // Find the target port (opposite type of where we started)
             let targetPort: { node: TreeNode; port: { type: 'input' | 'output'; index: number } } | null = null;
 
             // Try cache first (fast path)
             if (this.canvas.portCache.isValidCache()) {
                 const portHit = this.canvas.portCache.getPortAtPoint(worldPos);
-                if (portHit && portHit.port.type === 'input' && portHit.node !== this.editorState.tempConnection.from) {
+                if (portHit && portHit.port.type === targetPortType && portHit.node !== this.editorState.tempConnection.from) {
                     targetPort = portHit;
                 }
             } else {
@@ -284,7 +287,7 @@ export class InteractionManager {
                 for (const node of this.editorState.nodes) {
                     if (node === this.editorState.tempConnection.from) continue; // Can't connect to self
                     const port = this.canvas.nodeRenderer.getPortAtPoint(node, worldPos);
-                    if (port && port.type === 'input') {
+                    if (port && port.type === targetPortType) {
                         targetPort = { node, port };
                         break;
                     }
@@ -292,9 +295,19 @@ export class InteractionManager {
             }
 
             if (targetPort) {
-                // Create connection
-                const parent = this.editorState.tempConnection.from;
-                const child = targetPort.node;
+                // Determine parent and child based on which direction we dragged
+                let parent: TreeNode;
+                let child: TreeNode;
+
+                if (fromPortType === 'output') {
+                    // Dragged from output to input (normal direction: parent -> child)
+                    parent = this.editorState.tempConnection.from;
+                    child = targetPort.node;
+                } else {
+                    // Dragged from input to output (reverse direction: child -> parent)
+                    parent = targetPort.node;
+                    child = this.editorState.tempConnection.from;
+                }
 
                 // Check if connection is valid before creating operation
                 if (!parent.canAddMoreChildren()) {
