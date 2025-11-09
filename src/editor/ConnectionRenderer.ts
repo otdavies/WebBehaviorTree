@@ -179,6 +179,7 @@ export class ConnectionRenderer {
         ctx.setLineDash([]);
         ctx.lineDashOffset = 0;
         ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
     }
 
     /**
