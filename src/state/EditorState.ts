@@ -63,13 +63,14 @@ export class EditorState {
     public nodes: TreeNode[] = [];
 
     /**
-     * Temporary connection being dragged from parent to child
+     * Temporary connection being dragged (can be from output port to input, or input port to output)
      * @mutation
      */
     public tempConnection: {
         from: TreeNode;
         fromPort: number;
         toPos: Vector2;
+        fromPortType?: 'input' | 'output';  // Which port type we started dragging from
     } | null = null;
 
     /**
