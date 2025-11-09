@@ -53,24 +53,6 @@ export class ExamplesMenu {
             difficulty: 'advanced',
             tags: ['advanced', 'nesting', 'hierarchy'],
             category: 'Tutorial'
-        },
-        {
-            id: 'unity-patrol',
-            name: 'Unity Patrol AI',
-            description: 'Simple patrol behavior for Unity NavMesh agents',
-            path: 'templates/unity/patrol-ai.json',
-            difficulty: 'beginner',
-            tags: ['unity', 'patrol', 'navmesh', 'beginner'],
-            category: 'Game AI'
-        },
-        {
-            id: 'unity-combat',
-            name: 'Unity Combat AI',
-            description: 'Enemy AI with patrol and combat states',
-            path: 'templates/unity/combat-ai.json',
-            difficulty: 'intermediate',
-            tags: ['unity', 'combat', 'enemy', 'intermediate'],
-            category: 'Game AI'
         }
     ];
 
@@ -117,9 +99,6 @@ export class ExamplesMenu {
                 </button>
                 <button class="filter-btn" data-category="Tutorial">
                     <i class="fas fa-graduation-cap"></i> Tutorial
-                </button>
-                <button class="filter-btn" data-category="Game AI">
-                    <i class="fas fa-gamepad"></i> Game AI
                 </button>
             </div>
 
