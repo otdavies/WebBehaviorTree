@@ -13,53 +13,73 @@
         "type": "start",
         "label": "Start",
         "category": "decorator",
-        "position": { "x": 100, "y": 300 },
+        "position": { "x": 400, "y": 100 },
         "icon": "fa-play",
         "color": "#9b59b6",
-        "children": ["sequence-1"]
+        "children": ["sequence-1"],
+        "numInputs": 0,
+        "numOutputs": 1,
+        "inputPortType": "single",
+        "outputPortType": "single"
       },
       {
         "id": "sequence-1",
         "type": "sequence",
         "label": "Patrol Loop",
         "category": "composite",
-        "position": { "x": 300, "y": 300 },
+        "position": { "x": 400, "y": 250 },
         "icon": "fa-arrow-right",
         "color": "#3498db",
-        "children": ["action-1", "action-2", "action-3"]
+        "children": ["action-1", "action-2", "action-3"],
+        "numInputs": 1,
+        "numOutputs": -1,
+        "inputPortType": "single",
+        "outputPortType": "multi"
       },
       {
         "id": "action-1",
         "type": "action",
         "label": "Move to Waypoint",
         "category": "leaf",
-        "position": { "x": 500, "y": 200 },
+        "position": { "x": 200, "y": 400 },
         "icon": "fa-walking",
         "color": "#2ecc71",
         "code": "// Unity NavMesh move action\n// Implement in Unity:\n// navAgent.SetDestination(waypoints[currentIndex]);\n// return agent.remainingDistance > 0.5f ? NodeStatus.Running : NodeStatus.Success;",
-        "children": []
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
       },
       {
         "id": "action-2",
         "type": "wait",
-        "label": "Wait at Waypoint",
+        "label": "Wait",
         "category": "leaf",
-        "position": { "x": 500, "y": 300 },
+        "position": { "x": 400, "y": 400 },
         "icon": "fa-clock",
         "color": "#2ecc71",
         "config": { "duration": 2 },
-        "children": []
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
       },
       {
         "id": "action-3",
         "type": "action",
         "label": "Next Waypoint",
         "category": "leaf",
-        "position": { "x": 500, "y": 400 },
+        "position": { "x": 600, "y": 400 },
         "icon": "fa-step-forward",
         "color": "#2ecc71",
         "code": "// Cycle to next waypoint\n// currentIndex = (currentIndex + 1) % waypoints.Length;\n// return NodeStatus.Success;",
-        "children": []
+        "children": [],
+        "numInputs": 1,
+        "numOutputs": 0,
+        "inputPortType": "single",
+        "outputPortType": "single"
       }
     ],
     "root": "start-1"
