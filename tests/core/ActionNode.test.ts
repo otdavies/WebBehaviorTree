@@ -122,6 +122,24 @@ describe('ActionNode', () => {
       expect(result).toBe(NodeStatus.FAILURE);
     });
 
+    it('returns FAILURE when code returns undefined (no return statement)', () => {
+      const action = new ActionNode('No Return');
+
+      // Code that doesn't return anything
+      action.code = `
+        // Do some work but forget to return
+        const value = blackboard.get('count') || 0;
+        blackboard.set('count', value + 1);
+      `;
+
+      const result = action.tick(blackboard);
+
+      // Should silently return FAILURE when no return statement
+      expect(result).toBe(NodeStatus.FAILURE);
+      // Side effects should still happen
+      expect(blackboard.get('count')).toBe(1);
+    });
+
     it('returns SUCCESS when code is empty', () => {
       const action = new ActionNode('Empty Code');
       action.code = '';

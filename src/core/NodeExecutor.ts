@@ -78,9 +78,19 @@ export class NodeExecutor {
                 params || {}
             );
 
+            // Handle undefined return (common when code has no return statement)
+            // Silently treat as FAILURE - this is expected behavior for incomplete code
+            if (result === undefined) {
+                return NodeStatus.FAILURE;
+            }
+
             // Validate the result is a valid NodeStatus
             if (!this.isValidNodeStatus(result)) {
-                console.error(`Invalid return value from node code. Expected NodeStatus, got:`, result);
+                console.error(
+                    `Invalid return value from node code. Expected NodeStatus (SUCCESS/FAILURE/RUNNING/IDLE), got:`,
+                    result,
+                    `(type: ${typeof result})`
+                );
                 return NodeStatus.FAILURE;
             }
 
